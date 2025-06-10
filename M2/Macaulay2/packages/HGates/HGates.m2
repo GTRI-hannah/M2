@@ -45,9 +45,7 @@ HGate * HGate := (a,b) -> (
         } 
     )
 length ProductHGate := g -> 1
--*
-diff...
-*-
+diff (InputHGate, ProductHGate) := (x,g) -> diff(x,first g.Inputs) + diff(x,last g.Inputs)
 
 DivHGate = new Type of HGate
 net DivHGate := g -> "(" | net first g.Inputs | "/" | net last g.Inputs | ")"
@@ -55,14 +53,13 @@ HGate / HGate := (a,b) -> (
     if b===zeroHGate then error "division by zero";
     if a===zeroHGate then zeroHGate else
     if b===oneHGate then a else 
+    if a===b then oneHGate else
     new DivHGate from {
         Inputs => (a,b)
         } 
     )
 length DivHGate := g -> 1
--*
-diff ...
-*-
+diff (InputHGate, DivHGate) := (x,g) -> diff(x,first g.Inputs) + diff(x,last g.Inputs)
 
 -- helper method for getting A_{i, j} submatrix
 -- assume A is of length n^2 for n > 1
@@ -81,7 +78,6 @@ subHMatrix(ZZ,ZZ,ZZ,List) := (i, j, n, A) -> (
     assert(#B == (n-1)^2);
     B
 )
-
 
 DetHGate = new Type of HGate
 net DetHGate := g -> (
@@ -110,9 +106,15 @@ detHGate(ZZ,List) := (n,A) -> (
         }
     ))
 length DetHGate := g -> 1
--*
-diff...
-*-
+diff (InputHGate, DetHGate) := (x,g) -> (
+    n := first g.Inputs;
+    A := last g.Inputs;
+    if n == 1 then diff(x, g) else (
+        D := ((0..(n-1)) / 
+        (i -> diff(x, A#i * detHGate(n-1, subHMatrix(0, i, n, A))))
+            );
+        fold(plus, D)
+    ))
 
 SolveHGate = new Type of HGate
 -- solves for x = A^{-1} b
@@ -153,14 +155,40 @@ solveHGate = method()
 solveHGate(ZZ,List,List) := (n,A,b) -> (
     if #A != n^2 then error "`A` data array is not matching the expected size of the matrix";
     if #b != n then error "`b` data array is not matching the expected size of the matrix";
-    if n == 1 then "b#0 / A#0" else
+    if n == 1 then b#0 / A#0 else
     new SolveHGate from {
         Inputs => (A,b)      
         }
     )
 length SolveHGate := g -> #last g.Inputs
--*
-diff...
-*-
+diff (InputHGate, SolveHGate) := (x,g) -> (
+    n := #last g.Inputs; -- assume length b is n (from solveHGate assertion)
+    A := first g.Inputs;
+    b := last g.Inputs;
+    if n == 1 then diff(x, g) else (
+        detA := detHGate(n, A);
+        
+        -- compute adjugate(A)
+        adjA := flatten (toList(0..(n-1)) / (i -> (
+            toList(0..(n-1)) / (j -> (
+                if (i + j) % 2 == 0 then 
+                    -- (i, j) transpose of cofactor
+                    detHGate(n-1, subHMatrix(j, i, n, A)) 
+                else (
+                    -- (i, j) transpose of cofactor 
+                    minusOneHGate * detHGate(n-1, subHMatrix(j, i, n, A))
+            ))
+        ))));
+        
+        -- compute x = A^{-1} b = adjA * b / detA
+        returnX := toList (((0..(n-1)) / 
+            (i -> (fold (plus, ((0..(n-1))/ -- i-th row of adjA
+                (j -> ( adjA#(i*n + j) * b#j / detA))
+        )))))); -- j-th column adjA, j-th row of b
+
+        D := returnX / 
+            (e -> diff(x, e));
+        fold(plus, D)
+    ))
 
 end
