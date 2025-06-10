@@ -5,6 +5,20 @@ declareVariable y
 declareVariable z
 declareVariable w
 
+-- Test diff
+diff (x, x+y+x+x+z)
+diff (x, x*y*x)
+diff (x, x*y+x*(x*y))
+diff (x, x/(x*x*y))
+x/x
+diff (x, x/x)
+diff (x, detHGate(2, {x, y, z, oneHGate}))
+diff (x, detHGate(2, {x, x, x, oneHGate}))
+diff (x, detHGate(1, {x}))
+diff (x, solveHGate(1, {x}, {x})) -- expect 0
+diff (x, solveHGate(1, {x}, {y}))
+diff (x, solveHGate(2, {x, y, x, x}, {w, z})) -- expect 4 + 3 + 4 + 4
+
 -- Test DetHGate
 detHGate(2, {x, y, z, oneHGate})
 detHGate(2, {x, y, z, zeroHGate})
@@ -19,6 +33,7 @@ oneHGate * detHGate(2, {x, y, oneHGate, zeroHGate})
 
 A = {x, x, x, zeroHGate, y, y, zeroHGate, zeroHGate, z}
 detHGate(3, A)
+diff (x, detHGate(3, A))
 
 B = {oneHGate, zeroHGate, zeroHGate, zeroHGate, oneHGate, zeroHGate, zeroHGate, zeroHGate, oneHGate}
 -- expect 1
@@ -27,6 +42,7 @@ detHGate(3, B)
 C = {oneHGate, zeroHGate, zeroHGate, zeroHGate, x, zeroHGate, zeroHGate, zeroHGate, oneHGate}
 -- expect x
 detHGate(3, C)
+diff (x, detHGate(3, C))
 
 -- testing times
 for n in 5..1000 do (
