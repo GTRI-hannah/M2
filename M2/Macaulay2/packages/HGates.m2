@@ -75,12 +75,13 @@ subHMatrix(ZZ,ZZ,ZZ,List) := (i, j, n, A) -> (
     assert(j >= 0 and j < n);
     B := drop(A, {n*i, n*i + n - 1}); -- drop i-th row
     for k from 0 to n-2 do ( -- drop j-th column
-        B = drop(B, {k*n + j - k, k*n + j - k})
+        B = drop(B, {k*n + j - k, k*n + j - k});
     );
     --<< "[subHMatrix] B: " << B << endl;
     assert(#B == (n-1)^2);
     B
 )
+
 
 DetHGate = new Type of HGate
 net DetHGate := g -> (
@@ -98,8 +99,8 @@ net DetHGate := g -> (
 
     d := fold(plus, M);
 
-    d
-)
+    net d
+    )
 detHGate = method()
 detHGate(ZZ,List) := (n,A) -> (
     if #A != n^2 then error "data array is not matching the size of the matrix";
@@ -120,36 +121,39 @@ net SolveHGate := g -> (
     -- note: first g.Inputs is A, last g.Inputs is b
     --<< "[net SolveHGate] A: " << first g.Inputs << ", b: " << last g.Inputs << endl;
     n := #last g.Inputs; -- assume length b is n (from solveHGate assertion)
-    A : = first g.Inputs;
+    A := first g.Inputs;
     b := last g.Inputs;
     -- compute det(A)
     detA := detHGate(n, A);
-    << "[SolveHGate] detA: " << net detA << endl;
+    --<< "[SolveHGate] detA: " << net detA << endl;
     
     -- compute adjugate(A)
     adjA := flatten (toList(0..(n-1)) / (i -> (
         toList(0..(n-1)) / (j -> (
             if (i + j) % 2 == 0 then 
-                detHGate(n-1, subHMatrix(i, j, n, A)) 
-            else 
-                (
-            minusOneHGate * detHGate(n-1, subHMatrix(i, j, n, A))
+                -- (i, j) transpose of cofactor
+                detHGate(n-1, subHMatrix(j, i, n, A)) 
+            else (
+                -- (i, j) transpose of cofactor 
+                minusOneHGate * detHGate(n-1, subHMatrix(j, i, n, A))
         ))
     ))));
-    << "[SolveHGate] adjA: " << net adjA << endl;
+    --<< "[SolveHGate] adjA: " << net adjA << endl;
     
     -- compute x = A^{-1} b = adjA * b / detA
-    toList (((0..(n-1)) / 
+    returnX := toList (((0..(n-1)) / 
         (i -> (fold (plus, ((0..(n-1))/ -- i-th row of adjA
             (j -> ( adjA#(i*n + j) * b#j / detA))
-    )))))) -- j-th column adjA, j-th row of b
+    )))))); -- j-th column adjA, j-th row of b
+
+    net returnX
     
-)
+    )
 solveHGate = method()
 solveHGate(ZZ,List,List) := (n,A,b) -> (
     if #A != n^2 then error "`A` data array is not matching the expected size of the matrix";
     if #b != n then error "`b` data array is not matching the expected size of the matrix";
-    if n == 1 then b#0 / A#0 else
+    if n == 1 then "b#0 / A#0" else
     new SolveHGate from {
         Inputs => (A,b)      
         }
