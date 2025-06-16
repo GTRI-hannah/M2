@@ -45,21 +45,7 @@ HGate * HGate := (a,b) -> (
         } 
     )
 length ProductHGate := g -> 1
-diff (InputHGate, ProductHGate) := (x,g) -> diff(x,first g.Inputs) + diff(x,last g.Inputs)
-
-DivHGate = new Type of HGate
-net DivHGate := g -> "(" | net first g.Inputs | "/" | net last g.Inputs | ")"
-HGate / HGate := (a,b) -> (
-    if b===zeroHGate then error "division by zero";
-    if a===zeroHGate then zeroHGate else
-    if b===oneHGate then a else 
-    if a===b then oneHGate else
-    new DivHGate from {
-        Inputs => (a,b)
-        } 
-    )
-length DivHGate := g -> 1
-diff (InputHGate, DivHGate) := (x,g) -> diff(x,first g.Inputs) + diff(x,last g.Inputs)
+diff (InputHGate, ProductHGate) := (x,g) -> (first g.Inputs)*diff(x,last g.Inputs) + (last g.Inputs)*diff(x,first g.Inputs)
 
 -- helper method for getting A_{i, j} submatrix
 -- assume A is of length n^2 for n > 1
@@ -79,23 +65,25 @@ subHMatrix(ZZ,ZZ,ZZ,List) := (i, j, n, A) -> (
     B
 )
 
+-- from SPLexpressions, for printing
+concatenateNets = method()
+concatenateNets List := L -> (
+    result := net "";
+    for a in L do result = result | net a;
+    result
+    )
+
 DetHGate = new Type of HGate
 net DetHGate := g -> (
     n := first g.Inputs;
     A := last g.Inputs;
 
-    -- Laplace/Cofactor expansion along first row
-    M := ((0..(n-1)) / 
-        (i -> if i%2 == 0 then (
-                A#i * detHGate(n-1, subHMatrix(0, i, n, A))
-            ) else (
-                minusOneHGate * A#i * detHGate(n-1, subHMatrix(0, i, n, A))
-            )  
-        ));
+    -- print square matrix (n x n)
+    doubleListA := toList(0..(n-1)) / (i -> (
+        toList(0..(n-1)) / (j -> A#(i*n + j))
+    ));
+    concatenateNets {"det", MatrixExpression applyTable(doubleListA, net)}
 
-    d := fold(plus, M);
-
-    net d
     )
 detHGate = method()
 detHGate(ZZ,List) := (n,A) -> (
@@ -109,46 +97,28 @@ length DetHGate := g -> 1
 diff (InputHGate, DetHGate) := (x,g) -> (
     n := first g.Inputs;
     A := last g.Inputs;
-    if n == 1 then diff(x, g) else (
-        D := ((0..(n-1)) / 
-        (i -> diff(x, A#i * detHGate(n-1, subHMatrix(0, i, n, A))))
-            );
-        fold(plus, D)
-    ))
+    returnL := (0..n-1) / (i -> 
+        detHGate(n, toList (0..(n*n-1)) / (j -> 
+                if j >= i*n and j < (i+1)*n then diff(x, A#j) else A#j)));
+    fold(plus, returnL)
+    )
 
 SolveHGate = new Type of HGate
 -- solves for x = A^{-1} b
 -- assumes detA != 0
 net SolveHGate := g -> (
-    -- note: first g.Inputs is A, last g.Inputs is b
-    --<< "[net SolveHGate] A: " << first g.Inputs << ", b: " << last g.Inputs << endl;
     n := #last g.Inputs; -- assume length b is n (from solveHGate assertion)
     A := first g.Inputs;
     b := last g.Inputs;
-    -- compute det(A)
-    detA := detHGate(n, A);
-    --<< "[SolveHGate] detA: " << net detA << endl;
-    
-    -- compute adjugate(A)
-    adjA := flatten (toList(0..(n-1)) / (i -> (
-        toList(0..(n-1)) / (j -> (
-            if (i + j) % 2 == 0 then 
-                -- (i, j) transpose of cofactor
-                detHGate(n-1, subHMatrix(j, i, n, A)) 
-            else (
-                -- (i, j) transpose of cofactor 
-                minusOneHGate * detHGate(n-1, subHMatrix(j, i, n, A))
-        ))
-    ))));
-    --<< "[SolveHGate] adjA: " << net adjA << endl;
-    
-    -- compute x = A^{-1} b = adjA * b / detA
-    returnX := toList (((0..(n-1)) / 
-        (i -> (fold (plus, ((0..(n-1))/ -- i-th row of adjA
-            (j -> ( adjA#(i*n + j) * b#j / detA))
-    )))))); -- j-th column adjA, j-th row of b
 
-    net returnX
+    -- print square matrix (n x n)
+    doubleListA := toList(0..(n-1)) / (i -> (
+        toList(0..(n-1)) / (j -> A#(i*n + j))
+    ));
+    doubleListb := toList(0..(n-1)) / (i -> {b#i});
+
+    -- see overleaf for explanation
+    concatenateNets {"solve(", MatrixExpression applyTable(doubleListA, net), ", ", MatrixExpression applyTable(doubleListb, net), ")"}
     
     )
 solveHGate = method()
@@ -165,30 +135,22 @@ diff (InputHGate, SolveHGate) := (x,g) -> (
     n := #last g.Inputs; -- assume length b is n (from solveHGate assertion)
     A := first g.Inputs;
     b := last g.Inputs;
-    if n == 1 then diff(x, g) else (
-        detA := detHGate(n, A);
-        
-        -- compute adjugate(A)
-        adjA := flatten (toList(0..(n-1)) / (i -> (
-            toList(0..(n-1)) / (j -> (
-                if (i + j) % 2 == 0 then 
-                    -- (i, j) transpose of cofactor
-                    detHGate(n-1, subHMatrix(j, i, n, A)) 
-                else (
-                    -- (i, j) transpose of cofactor 
-                    minusOneHGate * detHGate(n-1, subHMatrix(j, i, n, A))
-            ))
-        ))));
-        
-        -- compute x = A^{-1} b = adjA * b / detA
-        returnX := toList (((0..(n-1)) / 
-            (i -> (fold (plus, ((0..(n-1))/ -- i-th row of adjA
-                (j -> ( adjA#(i*n + j) * b#j / detA))
-        )))))); -- j-th column adjA, j-th row of b
 
-        D := returnX / 
-            (e -> diff(x, e));
-        fold(plus, D)
-    ))
+    -- base case, 1x1 matrix, needs a divide gate
+    doubleListA := toList(0..(n-1)) / (i -> (
+        toList(0..(n-1)) / (j -> A#(i*n + j))
+    ));
+    -- SolveHGate for A and each partial diff column of A
+    -- returns a list of lists
+    partialOfA := toList (0..(n-1))/(i -> (
+                solveHGate(n, A, toList(0..(n-1)) / (j -> diff(x, A#(i*n+j))))));
+    -- returns a list
+    partialOfb := toList b / (e -> diff(x, e));
+
+    -- see overleaf for explanation
+    concatenateNets {"-[matrix", partialOfA, "*", 
+        solveHGate(n, A, b), "]+", solveHGate(n, A, partialOfb)}
+    
+    )
 
 end
