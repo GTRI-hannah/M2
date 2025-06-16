@@ -1,14 +1,27 @@
+-*restart
+needsPackage "SLPexpressions"
+declareVariable \ {x,y,z,w}
+E = det matrix{{x, x}, {x, y}}
+D = det matrix{{x,y,x},{z,y,z},{y,z,x}}
+net det matrix{{x}}
+matrix {{1, 2, 3, 4},{3,3,3,3}}
+diff(x,D)*-
+
 restart
 load "HGates.m2"
-declareVariable x
-declareVariable y
-declareVariable z
-declareVariable w
+declareVariable \ {x,y,z,w}
+
+H = solveHGate(2, {x, y, z, oneHGate}, {x, y})
+diff(x, H)
+
+D = detHGate(2, {x, y, z, oneHGate})
+diff(x, detHGate(2, {x, y, z, D}))
 
 -- Test diff
 diff (x, x+y+x+x+z)
 diff (x, x*y*x)
 diff (x, x*y+x*(x*y))
+
 diff (x, x/(x*x*y))
 x/x
 diff (x, x/x)
@@ -51,8 +64,10 @@ for n in 5..1000 do (
     E = toList (0..n*n-1) / (i -> if i%3 == 0 then x else (if i%7 == 0 then y else z));
     assert (#E == n*n);
     << "Computing detHGate for square matrix size " << n << ": w/ 0s, 1s, and w/o" << endl;
-    time detHGate(n, D);
-    time detHGate(n, E);
+    time d1 = detHGate(n, D);
+    time e1 = detHGate(n, E);
+    time diff(x, d1);
+    time diff(x, e1);
 );
 
 -- Test SolveHGate
@@ -67,7 +82,6 @@ s1 + s2
 -- examples of operations that need to be written out
 s1 + oneHGate
 s1 * s2
-s1 / s2
 detHGate(2, {s1, oneHGate, s2, oneHGate})
 
 -- testing times
@@ -78,6 +92,8 @@ for n in 5..1000 do (
     assert (#E == n*n);
     b = toList (0..n-1) / (i -> if i%4 == 0 then x else (if i%5 == 0 then w else y));
     << "Computing solveHGate for square matrix size " << n << ": w/ 0s, 1s, and w/o" << endl;
-    time solveHGate(n, D, b);
+    time d1 = solveHGate(n, D, b);
+    time diff(x, d1);
     time solveHGate(n, E, b);
+    time diff(x, e1);
 );
