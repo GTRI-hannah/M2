@@ -14,4 +14,3 @@ D = detHGate(2, {x,y,z,w})
 diff(x,D)
 D = detHGate(3,{x+y,y+z,z+w,y*x,z*y,w*x,x+oneHGate,y+oneHGate,z+oneHGate})
 diff(x,D)
-
