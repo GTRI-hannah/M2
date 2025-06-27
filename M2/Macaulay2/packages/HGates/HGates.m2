@@ -209,11 +209,15 @@ solveHGate(HMatrix, HMatrix) := (M, N) -> (
 
     if #A != n^2 then error "`A` data array is not matching the expected size of the matrix";
     if #b != n then error "`b` data array is not matching the expected size of the matrix";
+    if N.Columns != 1 then error "`b` must be a column vector";
+    if M.Rows != n then error "`A` must be a square matrix";
     new SolveHGate from {
-        Inputs => (M, N)      
+        Inputs => (M, N),
+        Rows => M.Columns,
+        Columns => 1      
         }
     )
-length SolveHGate := g -> (g.Inputs).Rows
+length SolveHGate := g -> g.Rows
 
 diff (InputHGate, SolveHGate) := (x,g) -> (
     M := first g.Inputs; -- HMatrix
@@ -238,7 +242,7 @@ diff (InputHGate, SolveHGate) := (x,g) -> (
 
     colMatrixHGates = hMatrix(flatListForMatrix, n, n);
 
-    -- returns a list
+    -- convert list to vector
     partialOfb := toList b / (e -> diff(x, e));
     partialN := hVector(partialOfb);
 
