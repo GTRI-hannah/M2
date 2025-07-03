@@ -1,5 +1,13 @@
 HGate = new Type of HashTable
 length HGate := g -> error "length(number of outputs) not defined for abstract HGate" -- need to define for each Type that inherits from HGate
+InputValueTable = new Type of HashTable -- table of input values
+inputValueTable = method()
+inputValueTable List := L -> new InputValueTable from hashTable L
+ValueList = new Type of List -- list of values
+valueList = method()
+valueList List := L -> new ValueList from L
+specialize = method() -- specializing InputHGates to values
+specialize (HGate, InputValueTable) := (g, L) -> error "specialize not defined for abstract HGate"
 
 InputHGate = new Type of HGate -- "abstract" unit of input  
 inputHGate = method()
@@ -9,6 +17,10 @@ inputHGate Thing := a -> new InputHGate from {
 isConstant InputHGate := a -> (instance(a.Name,Number) or instance(a.Name, RingElement)) 
 net InputHGate := g -> net g.Name
 length InputHGate := g -> 1 
+specialize (InputHGate, InputValueTable) := (g, L) -> valueList {
+    if isConstant g then g.Name else 
+    if L#?g then L#g else error "value not found for input"
+    }
 diff (InputHGate, InputHGate) := (x,y) -> if y === x then oneHGate else zeroHGate
 diff (InputHGate, HGate) := (x,g) -> error "diff not defined for abstract HGate"
 
@@ -32,6 +44,7 @@ HGate + HGate := (a,b) -> (
       	} 
     )
 length SumHGate := g -> 1
+specialize (SumHGate, InputValueTable) := (g, L) -> specialize(first g.Inputs, L) + specialize(last g.Inputs, L)
 diff (InputHGate, SumHGate) := (x,g) -> diff(x,first g.Inputs) + diff(x,last g.Inputs)
 
 ProductHGate = new Type of HGate
