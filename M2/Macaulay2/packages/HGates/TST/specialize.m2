@@ -8,7 +8,9 @@ R = QQ[X,Y,Z,W]
 x0 = inputValueTable {x => X, y => Y, z => Z, w => W}
 specialize(x,x0)
 specialize(x+y,x0)
+-- these don't work yet
 specialize(x*y,x0)
 specialize(x*y*z+w,x0)
+-- etc....
 
 

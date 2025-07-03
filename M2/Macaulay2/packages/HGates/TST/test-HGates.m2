@@ -1,19 +1,18 @@
 restart
 needs "../HGates.m2"
 declareVariable \ {x,y,z,w}
-M = hMatrix({x,y,z,w}, 2, 2)
-D = detHGate(M)
-diff(x,D)
+x  -- expect InputHMatrixGate
+x + y -- expect SumHMatrixGate
+h = hMatrixGate({x,y}, 2)
+j = hMatrixGate({h, z,w}, 4)
+k = hMatrixGate({h, z+x*x, x+x, j}, 8) 
+diff(x, h) 
+diff(x, j)
+diff(x, k)
+j + k -- expect error
+bigSumHMatrixGate(j, j) 
 
-M = hMatrix({x}, 1, 1)
-D = detHGate(M)
-diff(x,D)
-
-M = hMatrix({x,y,z,w}, 2, 2)
-N = hMatrix({oneHGate, y}, 2, 1)
-S = solveHGate(M, N)
-S.Inputs 
-M.Elements 
-S.Elements 
-diff(x,S)
-
+h = hMatrixGate({x,y}, 2)
+j = hMatrixGate({h, z,w}, 4)
+s = solveHMatrixGate(j, h) 
+diff(x, s)
