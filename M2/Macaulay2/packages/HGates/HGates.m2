@@ -30,11 +30,17 @@ specialize (HMatrixGate, InputValueTable) := (g, L) -> error "specialize not def
 
 flatten HMatrixGate := g -> (
     A := g.Elements; 
-    n := g.Size; 
+    n := g.Size; -- total number of entries in the matrix
     if #A == n then return g; -- already flattened
     AFlatten := flatten {A/(e -> flatten e)}; -- flatten the list of HMatrixGates
     hMatrixGate(AFlatten, g.Size) -- return a new HMatrixGate with the flattened list
 )
+specialize (HMatrixGate, InputValueTable) := (g, L) -> (
+    A := g.Elements;
+    nestedEvalA := valueList A/(e -> specialize(e, L));
+    evalA := flatten nestedEvalA; 
+    evalA 
+    )
 hMatrixGate = method()  
 hMatrixGate (List, ZZ) := (A, n) -> (
     if not all(A, (e -> instance(e, HMatrixGate))) then error "data array is not a list of HMatrixGates";
@@ -103,20 +109,20 @@ HMatrixGate * HMatrixGate := (a,b) -> (
         } 
     )
 length ProductHMatrixGate := g -> 1
+specialize (ProductHMatrixGate, InputValueTable) := (g, L) -> valueList { (specialize(first g.Inputs, L))#0 * (specialize(last g.Inputs, L))#0 }
 diff (InputHMatrixGate, ProductHMatrixGate) := (x,g) -> (first g.Inputs)*diff(x,last g.Inputs) + (last g.Inputs)*diff(x,first g.Inputs)
 
 DetHMatrixGate = new Type of HMatrixGate
 net DetHMatrixGate := g -> (
     M := g.Inputs;
 
-    << "entered net for det" << endl;
     concatenateNets {"det", net M}
 
     )
 detHMatrixGate = method()
 detHMatrixGate(HMatrixGate) := M -> (
     A := M.Elements;
-    n := M.Size; 
+    n := M.Size;
     if not isSquare(n) then error "Error, expecting a square matrix";
     if n == 1 then A#0 else (
         new DetHMatrixGate from {
@@ -124,6 +130,18 @@ detHMatrixGate(HMatrixGate) := M -> (
             }
     ))
 length DetHMatrixGate := g -> 1
+specialize (DetHMatrixGate, InputValueTable) := (g, L) -> (
+    M := g.Inputs;
+    n := M.Size; 
+    row := floor sqrt n; 
+    evalA := specialize(M, L); -- valueList
+    squareMatrixList := toList (0..(row-1)) / (i -> (
+        toList (0..(row-1)) / (j -> evalA#(i*row + j))
+    )); -- convert to a list of lists
+    squareMatrix := matrix squareMatrixList; -- convert to a matrix
+    valueList {det squareMatrix}
+    )
+
 diff (InputHMatrixGate, DetHMatrixGate) := (x,g) -> (
     M := g.Inputs;
     A := M.Elements;
@@ -134,6 +152,7 @@ diff (InputHMatrixGate, DetHMatrixGate) := (x,g) -> (
     fold(plus, returnL)
     )
 
+
 ElementHMatrixGate = new Type of HMatrixGate
 net ElementHMatrixGate := g -> (
     M := first g.Inputs;
@@ -143,9 +162,15 @@ net ElementHMatrixGate := g -> (
     concatenateNets {M, "[", i, "]"}
     )
 length ElementHMatrixGate := g -> 1
+specialize (ElementHMatrixGate, InputValueTable) := (g, L) -> (
+    M := first g.Inputs;
+    i := last g.Inputs;
+    evalA := specialize(M, L); -- computationally not great, but preserves blackbox structure
+    valueList { evalA#i }
+    )
 diff (InputHMatrixGate, ElementHMatrixGate) := (x,g) -> (
-    diffM := diff(x, first g.Inputs);
-    elementHMatrixGate(diffM, last g.Inputs) -- computationally not great, but preserves blackbox structure
+    diffM := diff(x, first g.Inputs); -- computationally not great, but preserves blackbox structure
+    elementHMatrixGate(diffM, last g.Inputs) 
     )
 elementHMatrixGate = method()
 elementHMatrixGate (HMatrixGate, ZZ) := (M, i) -> (
@@ -178,6 +203,14 @@ bigSumHMatrixGate(HMatrixGate, HMatrixGate) := (M, N) -> (
         }
     )
 length BigSumHMatrixGate := g -> length first g.Inputs -- assumes both inputs have the same length
+specialize (BigSumHMatrixGate, InputValueTable) := (g, L) -> (
+    M := first g.Inputs; 
+    N := last g.Inputs; 
+    n := length M; 
+    evalA := specialize (M, L);
+    evalB := specialize (N, L);
+    valueList toList (0..(n-1))/(i -> evalA#i + evalB#i) 
+    )
 diff (InputHMatrixGate, BigSumHMatrixGate) := (x,g) -> (
     M := first g.Inputs; 
     N := last g.Inputs;
@@ -207,6 +240,25 @@ length BigProductHMatrixGate := g -> (
     m := L#2;
     n*m
 )
+specialize (BigProductHMatrixGate, InputValueTable) := (g, L) -> (
+    M := (g.Inputs)#1; 
+    N := (g.Inputs)#2; 
+    I := (g.Inputs)#0;
+    n := I#0;
+    k := I#1;
+    m := I#2;
+    evalA := specialize (M, L);
+    evalB := specialize (N, L);
+    listMatrixA := toList (0..(n-1)) / (i -> (
+        toList (0..(k-1)) / (j -> evalA#(i*n + j))
+    )); -- convert to a list of lists
+    matrixA := matrix listMatrixA; 
+    listMatrixB := toList (0..(k-1)) / (i -> (
+        toList (0..(m-1)) / (j -> evalB#(i*k + j))
+    )); -- convert to a list of lists
+    matrixB := matrix listMatrixB;
+    valueList flatten entries (matrixA * matrixB)
+    )
 diff (InputHMatrixGate, BigProductHMatrixGate) := (x,g) -> (
     M := (g.Inputs)#1; 
     N := (g.Inputs)#2; 
@@ -251,7 +303,23 @@ length SolveHMatrixGate := g -> (
     N := last g.Inputs; 
     length N
 )
-
+specialize (SolveHMatrixGate, InputValueTable) := (g, L) -> (
+    M := first g.Inputs;
+    N := last g.Inputs;
+    n := length N;
+    evalA := specialize (M, L);
+    evalB := specialize (N, L);
+    listMatrixA := toList (0..(n-1)) / (i -> (
+        toList (0..(n-1)) / (j -> evalA#(i*n + j))
+    )); -- convert to a list of lists
+    matrixA := matrix listMatrixA; 
+    inverseMatrixA := inverse matrixA;
+    listMatrixB := toList (0..(n-1)) / (i ->
+        {evalB#i}
+    ); -- convert to a list of lists
+    matrixB := matrix listMatrixB;
+    valueList flatten entries (inverseMatrixA * matrixB)
+    )
 diff (InputHMatrixGate, SolveHMatrixGate) := (x,g) -> (
     M := first g.Inputs; 
     N := last g.Inputs; 
@@ -283,5 +351,20 @@ diff (InputHMatrixGate, SolveHMatrixGate) := (x,g) -> (
     bigSumHMatrixGate(bigProductHMatrixGate({n, n, 1}, colMatrixHMatrixGates, solveHMatrixGate(M, N)), solveHMatrixGate(M, partialN))
     
     )
+
+
+
+HSLP = new Type of HashTable
+hSLP = method()
+hSLP(HashTable, List, List) := (P, I, O) -> (
+        1
+    )
+
+
+
+
+
+
+
 
 end
