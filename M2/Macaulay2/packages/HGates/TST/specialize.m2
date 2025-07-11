@@ -34,12 +34,9 @@ specialize(diff (x, bigSumHMatrixGate(M, N)), x0)
 
 specialize(bigProductHMatrixGate({2, 2, 2}, M, N), x0)
 specialize(bigProductHMatrixGate({2, 2, 2}, M, O), x0)
--- TODO: this produces a size 1 result, not sure why yet
 specialize(diff (x, bigProductHMatrixGate({2, 2, 2}, M, N)), x0)
 
 specialize(solveHMatrixGate(O, Q), x0)
-
--- TODO: not working
 specialize(diff (x, solveHMatrixGate(O, Q)), x0)
 
  

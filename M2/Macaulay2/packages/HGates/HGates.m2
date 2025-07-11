@@ -70,7 +70,8 @@ specialize (InputHMatrixGate, InputValueTable) := (g, L) -> valueList {
 diff (InputHMatrixGate, InputHMatrixGate) := (x,y) -> if y === x then oneHMatrixGate else zeroHMatrixGate
 diff (InputHMatrixGate, HMatrixGate) := (x,g) -> (
     A := g.Elements; -- List of HMatrixGates
-    hMatrixGate(A/(e -> diff(x, e)), g.Size) -- diff each HMatrixGate in the list
+    diffA := A/(e -> diff(x, e));
+    hMatrixGate(diffA, g.Size) -- diff each HMatrixGate in the list
     )
 
 oneHMatrixGate = inputHMatrixGate 1
@@ -206,9 +207,9 @@ length BigSumHMatrixGate := g -> length first g.Inputs -- assumes both inputs ha
 specialize (BigSumHMatrixGate, InputValueTable) := (g, L) -> (
     M := first g.Inputs; 
     N := last g.Inputs; 
-    n := length M; 
     evalA := specialize (M, L);
     evalB := specialize (N, L);
+    n := #evalA;
     valueList toList (0..(n-1))/(i -> evalA#i + evalB#i) 
     )
 diff (InputHMatrixGate, BigSumHMatrixGate) := (x,g) -> (
@@ -236,8 +237,8 @@ bigProductHMatrixGate(List, HMatrixGate, HMatrixGate) := (I, M, N) -> (
     )
 length BigProductHMatrixGate := g -> (
     I := (g.Inputs)#0;
-    n := L#0;
-    m := L#2;
+    n := I#0;
+    m := I#2;
     n*m
 )
 specialize (BigProductHMatrixGate, InputValueTable) := (g, L) -> (
@@ -250,26 +251,24 @@ specialize (BigProductHMatrixGate, InputValueTable) := (g, L) -> (
     evalA := specialize (M, L);
     evalB := specialize (N, L);
     listMatrixA := toList (0..(n-1)) / (i -> (
-        toList (0..(k-1)) / (j -> evalA#(i*n + j))
+        toList (0..(k-1)) / (j -> evalA#(i*k + j))
     )); -- convert to a list of lists
     matrixA := matrix listMatrixA; 
     listMatrixB := toList (0..(k-1)) / (i -> (
-        toList (0..(m-1)) / (j -> evalB#(i*k + j))
+        toList (0..(m-1)) / (j -> evalB#(i*m + j))
     )); -- convert to a list of lists
     matrixB := matrix listMatrixB;
-    valueList flatten entries (matrixA * matrixB)
+    resultAxB := valueList flatten entries (matrixA * matrixB);
+    resultAxB
     )
 diff (InputHMatrixGate, BigProductHMatrixGate) := (x,g) -> (
     M := (g.Inputs)#1; 
     N := (g.Inputs)#2; 
     I := (g.Inputs)#0;
-    n := I#0;
-    k := I#1;
-    m := I#2;
 
     bigSumHMatrixGate(
-        bigProductHMatrixGate({n, k, m}, M, diff(x, N)),
-        bigProductHMatrixGate({n, k, m}, diff(x, M), N)
+        bigProductHMatrixGate(I, M, diff(x, N)),
+        bigProductHMatrixGate(I, diff(x, M), N)
         ))
 
 SolveHMatrixGate = new Type of HMatrixGate
@@ -335,12 +334,10 @@ diff (InputHMatrixGate, SolveHMatrixGate) := (x,g) -> (
     -- list of length n with SolveHMatrixGate entries
     partialOfA := toList (0..(n-1))/(i -> (
                 solveHMatrixGate(M, hMatrixGate(toList(0..(n-1)) / (j -> diff(x, A#(i*n+j))), n))));
-
     flatListForMatrix := flatten (toList (0..(n-1)) / (i -> (
         toList(0..(n-1)) / (j -> elementHMatrixGate(partialOfA#j, i) 
         ))
     ));
-
     colMatrixHMatrixGates := hMatrixGate(flatListForMatrix, n*n);
 
     -- convert list to vector
