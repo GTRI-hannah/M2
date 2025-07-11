@@ -39,4 +39,28 @@ specialize(diff (x, bigProductHMatrixGate({2, 2, 2}, M, N)), x0)
 specialize(solveHMatrixGate(O, Q), x0)
 specialize(diff (x, solveHMatrixGate(O, Q)), x0)
 
- 
+restart
+needs "../HGates.m2"
+declareVariable \ {x, y, z}
+R = RR; -- using to unify ring for "matrix" function
+x0 = inputValueTable {x => 2_R, y => pi_R}
+
+H = hashTable{1 => (inputHMatrixGate, {x}), 
+               2 => (inputHMatrixGate, {y}),
+               3 => (sumHMatrixGate, {1, 2}), 
+               4 => (productHMatrixGate, {1, 2}),
+               5 => (detHMatrixGate, {1, 2, 3, 4})
+            };
+I = {1, 2};
+O = {5}
+P = hSLP(H, I, O)
+values P.Graph
+specialize (P.Graph#1, x0)
+specialize (P, x0)
+
+-- PROBLEM
+gate = inputHMatrixGate x 
+var = ((H#1)#1)#0
+gate === x -- FALSE!
+var === x
+

@@ -12,6 +12,8 @@ isSquare = n -> (
     s*s == n         
 )
 
+-- H version of Gates ---------------------------------------------
+
 HMatrixGate = new Type of HashTable
 net HMatrixGate := g -> (
     A := g.Elements; -- List of HMatrixGates
@@ -26,7 +28,6 @@ ValueList = new Type of List -- list of values
 valueList = method()
 valueList List := L -> new ValueList from L
 specialize = method() -- specializing InputHGates to values
-specialize (HMatrixGate, InputValueTable) := (g, L) -> error "specialize not defined for abstract HGate"
 
 flatten HMatrixGate := g -> (
     A := g.Elements; 
@@ -79,7 +80,7 @@ minusOneHMatrixGate = inputHMatrixGate(-1)
 zeroHMatrixGate = inputHMatrixGate 0
 
 declareVariable = method()
-declareVariable Symbol :=  
+declareVariable Symbol :=  -- ???
 declareVariable IndexedVariable := g -> (g <- inputHMatrixGate g) 
 declareVariable InputHMatrixGate := g -> g
 declareVariable Thing := g -> error "defined only for a Symbol or an IndexedVariable" 
@@ -94,6 +95,18 @@ HMatrixGate + HMatrixGate := (a,b) -> (
       	Inputs => (a,b)
       	} 
     )
+sumHMatrixGate = method()
+sumHMatrixGate(HMatrixGate) := (M) -> (
+    if length M != 2 then error "expecting 2 HMatrixGates";
+    a := (M.Elements)#0;
+    b := (M.Elements)#1;
+    if length a != 1 or length b != 1 then error "can only sum two HMatrixGates of size 1";
+    if a===zeroHMatrixGate then b else 
+    if b===zeroHMatrixGate then a else 
+    new SumHMatrixGate from {
+      	Inputs => (a,b)
+      	} 
+    )
 length SumHMatrixGate := g -> 1 -- wrong, need to sum the size of the inputs
 specialize (SumHMatrixGate, InputValueTable) := (g, L) -> specialize(first g.Inputs, L) + specialize(last g.Inputs, L)
 diff (InputHMatrixGate, SumHMatrixGate) := (x,g) -> diff(x,first g.Inputs) + diff(x,last g.Inputs)
@@ -101,6 +114,19 @@ diff (InputHMatrixGate, SumHMatrixGate) := (x,g) -> diff(x,first g.Inputs) + dif
 ProductHMatrixGate = new Type of HMatrixGate
 net ProductHMatrixGate := g -> "(" | net first g.Inputs | "*" | net last g.Inputs | ")"
 HMatrixGate * HMatrixGate := (a,b) -> (
+    if length a != 1 or length b != 1 then error "can only multiply two HMatrixGates of size 1";
+    if a===zeroHMatrixGate or b===zeroHMatrixGate then zeroHMatrixGate else 
+    if a===oneHMatrixGate then b else 
+    if b===oneHMatrixGate then a else 
+    new ProductHMatrixGate from {
+        Inputs => (a,b)
+        } 
+    )
+productHMatrixGate = method()
+productHMatrixGate(HMatrixGate) := (M) -> (
+    if length M != 2 then error "expecting 2 HMatrixGates";
+    a := (M.Elements)#0;
+    b := (M.Elements)#1;
     if length a != 1 or length b != 1 then error "can only multiply two HMatrixGates of size 1";
     if a===zeroHMatrixGate or b===zeroHMatrixGate then zeroHMatrixGate else 
     if a===oneHMatrixGate then b else 
@@ -350,18 +376,70 @@ diff (InputHMatrixGate, SolveHMatrixGate) := (x,g) -> (
     )
 
 
+-- H version of Straight-line Programs ---------------------------------------------
 
 HSLP = new Type of HashTable
-hSLP = method()
-hSLP(HashTable, List, List) := (P, I, O) -> (
-        1
+length HSLP := P -> (
+    #P.Gates
+    )
+-- note: "size" is a protected global variable, so using sizeSLP
+sizeSLP = method()
+sizeSLP HSLP := P -> (
+    Graph := P.Graph;
+    listOfGateSizes := G / (i -> length Graph#i);
+    fold(plus, listOfGateSizes)
     )
 
+-- returns specialization of the outputs of the HSLP
+specialize (HSLP, InputValueTable) := (P, L) -> (
+    Graph := P.Graph;
+    -- start
+    for i in (sort keys Graph) do (
+        << "current gate [" << i << "]: " << Graph#i << endl;
+        << "specialize gate [" << i << "]: " << specialize (Graph#i, L) << endl;
+    );
 
+    -- end
+    evalGraph := new HashTable from (sort keys Graph) / (i -> i => specialize (Graph#i, L));
+    << "finished evalGraph " << evalGraph << endl;
+    O / (i -> evalGraph#i)
+    )
 
+hSLP = method()
+-- TODO: probably H is a better variable than P, change this
+hSLP(HashTable, List, List) := (P, I, O) -> (
+        -- check inputs in P
+        I / (i -> assert(P#?i and (P#i)#0 === inputHMatrixGate and #((P#i)#1) == 1 ));
 
+        -- check outputs in P
+        O / (i -> assert(P#?i));
 
+        -- check acyclic graph 
+        (keys P) / (i -> assert(any(I, j -> j == i) or i > max (P#i)#1));
 
+        -- build list of gate indices
+        G := {};
+        (keys P) / (i -> if not I#?i then G = append(G, i));
+
+        -- construct HashTable of HMatrixGates
+        exP := new MutableHashTable;
+        (sort keys P) / (i -> if any(I, j -> j == i) then (
+                                var := ((P#i)#1)#0;
+                                exP#i = var
+                         ) else   (
+                                M := hMatrixGate((P#i)#1 / (j -> exP#j), #((P#i)#1));
+                                func := (P#i)#0;
+                                gate := func M;
+                                exP#i = gate
+                         ));
+
+        new HSLP from {
+            Graph => exP,
+            Inputs => I,
+            Gates => G,
+            Outputs => O
+        }
+    )
 
 
 end
