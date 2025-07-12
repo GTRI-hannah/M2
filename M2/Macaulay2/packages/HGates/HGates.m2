@@ -386,7 +386,7 @@ length HSLP := P -> (
 sizeSLP = method()
 sizeSLP HSLP := P -> (
     Graph := P.Graph;
-    listOfGateSizes := G / (i -> length Graph#i);
+    listOfGateSizes := P.Gates / (i -> length Graph#i);
     fold(plus, listOfGateSizes)
     )
 
@@ -404,9 +404,11 @@ specialize (HSLP, InputValueTable) := (P, L) -> (
     << "finished evalGraph " << evalGraph << endl;
     O / (i -> evalGraph#i)
     )
-
+diff (InputHMatrixGate, HSLP) := (x, P) -> (
+    0 -- TODO
+    )
 hSLP = method()
--- TODO: probably H is a better variable than P, change this
+-- TODO: probably H is a better variable than P, rewrite this (low priority)
 hSLP(HashTable, List, List) := (P, I, O) -> (
         -- check inputs in P
         I / (i -> assert(P#?i and (P#i)#0 === inputHMatrixGate and #((P#i)#1) == 1 ));
@@ -419,7 +421,7 @@ hSLP(HashTable, List, List) := (P, I, O) -> (
 
         -- build list of gate indices
         G := {};
-        (keys P) / (i -> if not I#?i then G = append(G, i));
+        (keys P) / (i -> if not any(I, j -> j == i) then G = append(G, i));
 
         -- construct HashTable of HMatrixGates
         exP := new MutableHashTable;

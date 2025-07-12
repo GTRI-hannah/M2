@@ -54,6 +54,8 @@ H = hashTable{1 => (inputHMatrixGate, {x}),
 I = {1, 2};
 O = {5}
 P = hSLP(H, I, O)
+length P 
+sizeSLP P
 values P.Graph
 specialize (P.Graph#1, x0)
 specialize (P, x0)
