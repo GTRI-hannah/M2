@@ -41,28 +41,47 @@ specialize(diff (x, solveHMatrixGate(O, Q)), x0)
 
 restart
 needs "../HGates.m2"
-declareVariable \ {x, y, z}
+declareVariable \ {x, y, z, a, b}
 R = RR; -- using to unify ring for "matrix" function
-x0 = inputValueTable {x => 2_R, y => pi_R}
+x0 = inputValueTable {x => 2_R, y => pi_R, a => 3_R, b => 0_R}
 
+-- arithmetic example
 H = hashTable{1 => (inputHMatrixGate, {x}), 
                2 => (inputHMatrixGate, {y}),
                3 => (sumHMatrixGate, {1, 2}), 
-               4 => (productHMatrixGate, {1, 2}),
-               5 => (detHMatrixGate, {1, 2, 3, 4})
+               4 => (productHMatrixGate, {1, 3}), 
+               5 => (productHMatrixGate, {3, 4})
             };
 I = {1, 2};
+O = {4, 5};
+P = hSLP(H, I, O)
+sizeSLP P
+peek gates P
+dP = diff (x, P) 
+peek dP.Relations
+peek dP.Inputs  
+peek gates dP 
+specialize (P, x0)
+specialize (dP, x0)
+
+-- solveHGate I[x y] 
+-- gates fails for 6 (when outputs are masked)
+-- TODO: think about HGate vs HMatrixGate 
+H = hashTable{
+   1 => (inputHMatrixGate, {x}),
+   2 => (inputHMatrixGate, {y}),
+   3 => (inputHMatrixGate, {a}),
+   4 => (inputHMatrixGate, {b}),
+   5 => (solveHMatrixGate, {3, 4, 4, 3, 1, 2})
+   --6 => (solveHMatrixGate, {3, 4, 4, 3, 5})
+};
+I = toList (1..4)
 O = {5}
 P = hSLP(H, I, O)
-length P 
-sizeSLP P
-values P.Graph
-specialize (P.Graph#1, x0)
-specialize (P, x0)
+peek gates P -- breaks for 6
+specialize (P, x0) -- breaks 
 
--- PROBLEM
+-- note that this is an issue
 gate = inputHMatrixGate x 
-var = ((H#1)#1)#0
 gate === x -- FALSE!
-var === x
 

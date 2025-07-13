@@ -24,6 +24,7 @@ length HMatrixGate := g -> g.Size -- number of HMatrixGates in the matrix
 InputValueTable = new Type of HashTable -- table of input values
 inputValueTable = method()
 inputValueTable List := L -> new InputValueTable from hashTable L
+inputValueTable HashTable := H -> new InputValueTable from H
 ValueList = new Type of List -- list of values
 valueList = method()
 valueList List := L -> new ValueList from L
@@ -379,33 +380,137 @@ diff (InputHMatrixGate, SolveHMatrixGate) := (x,g) -> (
 -- H version of Straight-line Programs ---------------------------------------------
 
 HSLP = new Type of HashTable
+gates = method()
+gates HSLP := P -> (
+    -- construct HashTable of HMatrixGates
+    H := P.Relations;
+    I := P.Inputs;
+    exH := new MutableHashTable;
+    (sort keys H) / (i -> if any(I, j -> j == i) then (
+                            var := ((H#i)#1)#0;
+                            exH#i = var
+                        ) else (
+                            func := (H#i)#0;
+                            if func === solveHMatrixGate then ( -- solveHMatrixGate takes two input matrices
+                                l := #((H#i)#1);
+                                n := floor ((-1 + sqrt (1 + 4*l))/2);
+                                --<< "[gate for solveGate] confirm l = n*n + n: " << l == n*n+n << ", l: " << l << ", n: " << n << endl;
+                                nSqrdList := take((H#i)#1, {0, n*n - 1});
+                                nList := take((H#i)#1, {n*n, n*n + n-1});
+
+                                M := hMatrixGate(nSqrdList / (j -> exH#j), n*n);
+                                N := hMatrixGate(nList / (j -> exH#j), n);
+
+                                gate := func (M, N);
+                                exH#i = gate
+                            ) else ( 
+
+                                M := hMatrixGate((H#i)#1 / (j -> exH#j), #((H#i)#1));
+                        
+                                gate := func M;
+                                exH#i = gate
+                            )
+                        ));
+    exH
+)
 length HSLP := P -> (
     #P.Gates
     )
 -- note: "size" is a protected global variable, so using sizeSLP
 sizeSLP = method()
 sizeSLP HSLP := P -> (
-    Graph := P.Graph;
+    Graph = gates P;
     listOfGateSizes := P.Gates / (i -> length Graph#i);
     fold(plus, listOfGateSizes)
     )
 
 -- returns specialization of the outputs of the HSLP
 specialize (HSLP, InputValueTable) := (P, L) -> (
-    Graph := P.Graph;
-    -- start
-    for i in (sort keys Graph) do (
-        << "current gate [" << i << "]: " << Graph#i << endl;
-        << "specialize gate [" << i << "]: " << specialize (Graph#i, L) << endl;
-    );
+    H := P.Relations;
+    O := P.Outputs;
+    newL := new MutableHashTable from L; -- updating valueTable
+    R := RR; -- putting everything into RR
+    select(flatten ((keys H) / (i -> if (H#i)#0 === inputHMatrixGate then (
+        declareVariable g_i; -- variable to store evaluation
 
-    -- end
-    evalGraph := new HashTable from (sort keys Graph) / (i -> i => specialize (Graph#i, L));
-    << "finished evalGraph " << evalGraph << endl;
-    O / (i -> evalGraph#i)
+        immNewL := new HashTable from newL; -- work around to update ValueList
+        newVT := inputValueTable immNewL;
+
+        evalgi := ((specialize(((H#i)#1)#0, newVT))#0)_R; -- returns one real number
+        newL#(g_i) = evalgi; -- M2 will complain about newL#g_i
+
+        if any(O, j -> j == i) then evalgi -- returns output value
+    ) else (
+        -- selects all of the variables in newL corresponding to outputs in (H#i)#1
+        intGates := flatten ((H#i)#1 / (j -> 
+            select(keys newL, v -> (
+                s = toString (v.Name); 
+                t1 = concatenate{"g_",toString j}; 
+                t2 = concatenate{"g_{",toString j,","}; 
+                --<< "s: " << s << "|, substring: " << substring(s, 0, #t2) << "| t2: " << t2 << endl; 
+                s === t1 or substring(s, 0, #t2) === t2))
+        ));
+        --<< "intGates: " << intGates << endl;
+
+        M := hMatrixGate(intGates, #intGates); -- TODO: #intGates might be a bug
+        func := (H#i)#0;
+        << "func: " << func << ", M: " << M << endl;
+        gate := func M;
+
+        immNewL = new HashTable from newL; -- work around to update ValueList
+        newVT = inputValueTable immNewL;
+
+        evalgi = (flatten specialize(gate, newVT)) / (e -> e_R); -- ValueList
+
+        -- assign variables to the evaluation of H#i
+        if #evalgi == 1 then (
+            declareVariable g_i; -- single variable to store evaluation
+            newL#(g_i) = evalgi#0;
+        ) else ( -- create a new variable for every value in the output
+            listgi := toList (1..#evalgi) / (j -> g_{i, j});
+            declareVariable \ listgi;
+            (0..#listgi-1) / (j -> newL#(listgi#j) = evalgi#j)
+        ); 
+
+        if any(O, j -> j == i) then evalgi -- returns output value
+    ))), e -> not e === null) -- removes null values
     )
+-- returns an SLP with differentiated outputs
 diff (InputHMatrixGate, HSLP) := (x, P) -> (
-    0 -- TODO
+    H := P.Relations;
+
+    -- differentiated HashTable
+    newH := new MutableHashTable from H;
+
+    -- add new scalars from differentiation
+    newI := I;
+
+    -- for indexing into new HashTable
+    m := max (keys H); -- assuming 0 is not a key in H
+    e := 0; -- extra shift
+
+    -- "Coordiante"
+    C := new MutableHashTable; -- matches index in H with diff in newH
+    (sort keys H) / (i -> if (H#i)#0 === inputHMatrixGate then (
+                                C#i = m+i+e;
+                                newI = append(newI, m+i+e);
+                                newH#(m+i+e) = (inputHMatrixGate, {diff(x, ((H#i)#1)#0)})
+                            ) else if (H#i)#0 === sumHMatrixGate then (
+                                C#i = m+i+e;
+                                newH#(m+i+e) = (sumHMatrixGate, (H#i)#1 / (j -> C#j))
+                            ) else if (H#i)#0 === productHMatrixGate then (
+                                k := ((H#i)#1)#0;
+                                l := ((H#i)#1)#1;
+                                newH#(m+i+e) = (productHMatrixGate, {k, C#l});
+                                newH#(m+i+e+1) = (productHMatrixGate, {C#k, l});
+                                newH#(m+i+e+2) = (sumHMatrixGate, {m+i+e, m+i+e+1});
+                                C#i = m+i+e+2;
+                                e = e + 2
+                            ) -- TODO other gates
+                            );
+    newO := O / (i -> C#i);
+    hSLP(newH, newI, newO)
+
     )
 hSLP = method()
 -- TODO: probably H is a better variable than P, rewrite this (low priority)
@@ -423,20 +528,8 @@ hSLP(HashTable, List, List) := (P, I, O) -> (
         G := {};
         (keys P) / (i -> if not any(I, j -> j == i) then G = append(G, i));
 
-        -- construct HashTable of HMatrixGates
-        exP := new MutableHashTable;
-        (sort keys P) / (i -> if any(I, j -> j == i) then (
-                                var := ((P#i)#1)#0;
-                                exP#i = var
-                         ) else   (
-                                M := hMatrixGate((P#i)#1 / (j -> exP#j), #((P#i)#1));
-                                func := (P#i)#0;
-                                gate := func M;
-                                exP#i = gate
-                         ));
-
         new HSLP from {
-            Graph => exP,
+            Relations => P, -- apparently Macaulay2 complains about H as a key
             Inputs => I,
             Gates => G,
             Outputs => O
