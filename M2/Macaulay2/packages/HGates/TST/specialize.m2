@@ -1,8 +1,12 @@
 restart
 needs "../HGates.m2"
 declareVariable \ {a,b,x,y,z,w}
-R = RR; -- using to unify ring for "matrix" function
-x0 = inputValueTable {x => 2_R, y => pi_R, z => 0_R, w => 1/2_R, a => 1, b => -1}
+
+--R = RR_53; -- using to unify ring for "matrix" function
+--x0 = inputValueTable {x => 2_R, y => pi_R, z => 0_R, w => 1/2_R, a => 1, b => -1}
+
+R = frac(QQ[A,B,X,Y,Z,W]); -- using to unify ring for "matrix" function
+x0 = inputValueTable {x => X, y => Y, z => Z, w => W, a => A, b => B}
 
 -- input, sum, product
 specialize(x,x0)
