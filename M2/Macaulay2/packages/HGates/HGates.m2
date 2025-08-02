@@ -19,7 +19,7 @@ net HMatrixGate := g -> (
     A := g.Elements; -- List of HMatrixGates
     concatenateNets{"|", A, "|"}
     )
-length HMatrixGate := g -> g.Size -- number of HMatrixGates in the matrix
+length HMatrixGate := g -> g.Rows*g.Cols -- number of HMatrixGates in the matrix
 
 InputValueTable = new Type of HashTable -- table of input values
 inputValueTable = method()
@@ -30,12 +30,13 @@ valueList = method()
 valueList List := L -> new ValueList from L
 specialize = method() -- specializing InputHGates to values
 
+-- flatten HMatrixGate into list of size 1 HMatrixGates
 flatten HMatrixGate := g -> (
     A := g.Elements; 
-    n := g.Size; -- total number of entries in the matrix
+    n := length g; -- total number of entries in the matrix
     if #A == n then return g; -- already flattened
     AFlatten := flatten {A/(e -> flatten e)}; -- flatten the list of HMatrixGates
-    hMatrixGate(AFlatten, g.Size) -- return a new HMatrixGate with the flattened list
+    hMatrixGate(AFlatten, n) -- return a new HMatrixGate with the flattened list
 )
 specialize (HMatrixGate, InputValueTable) := (g, L) -> (
     A := g.Elements;
@@ -44,8 +45,8 @@ specialize (HMatrixGate, InputValueTable) := (g, L) -> (
     evalA 
     )
 hMatrixGate = method()  
-hMatrixGate (List, ZZ) := (A, n) -> (
-    if not all(A, (e -> instance(e, HMatrixGate))) then error "data array is not a list of HMatrixGates";
+hMatrixGate (List, ZZ, ZZ) := (A, r, c) -> (
+    if not all(A, (e -> instance(e, HMatrixGate))) then error "input is not a list of HMatrixGates";
     tempA := flatten {A/(e -> if length e == 1 then e 
                                 else (tempe := flatten e;
                                     tempe.Elements
@@ -53,7 +54,8 @@ hMatrixGate (List, ZZ) := (A, n) -> (
     AFlatten := flatten tempA; -- flatten the list of HMatrixGates
     new HMatrixGate from {
         Elements => AFlatten,
-        Size => n
+        Rows => r,
+        Cols => c
         }
     )
 
@@ -73,7 +75,7 @@ diff (InputHMatrixGate, InputHMatrixGate) := (x,y) -> if y === x then oneHMatrix
 diff (InputHMatrixGate, HMatrixGate) := (x,g) -> (
     A := g.Elements; -- List of HMatrixGates
     diffA := A/(e -> diff(x, e));
-    hMatrixGate(diffA, g.Size) -- diff each HMatrixGate in the list
+    hMatrixGate(diffA, g.Rows, g.Cols) -- diff each HMatrixGate in the list
     )
 
 oneHMatrixGate = inputHMatrixGate 1
@@ -108,7 +110,7 @@ sumHMatrixGate(HMatrixGate) := (M) -> (
       	Inputs => (a,b)
       	} 
     )
-length SumHMatrixGate := g -> 1 -- wrong, need to sum the size of the inputs
+length SumHMatrixGate := g -> 1 
 specialize (SumHMatrixGate, InputValueTable) := (g, L) -> specialize(first g.Inputs, L) + specialize(last g.Inputs, L)
 diff (InputHMatrixGate, SumHMatrixGate) := (x,g) -> diff(x,first g.Inputs) + diff(x,last g.Inputs)
 
@@ -143,16 +145,15 @@ diff (InputHMatrixGate, ProductHMatrixGate) := (x,g) -> (first g.Inputs)*diff(x,
 DetHMatrixGate = new Type of HMatrixGate
 net DetHMatrixGate := g -> (
     M := g.Inputs;
-
     concatenateNets {"det", net M}
-
     )
 detHMatrixGate = method()
 detHMatrixGate(HMatrixGate) := M -> (
     A := M.Elements;
-    n := M.Size;
-    if not isSquare(n) then error "Error, expecting a square matrix";
-    if n == 1 then A#0 else (
+    r := M.Rows;
+    c := M.Cols;
+    if r != c then error "Error, expecting a square matrix";
+    if r == 1 then A#0 else (
         new DetHMatrixGate from {
             Inputs => M        
             }
@@ -160,8 +161,7 @@ detHMatrixGate(HMatrixGate) := M -> (
 length DetHMatrixGate := g -> 1
 specialize (DetHMatrixGate, InputValueTable) := (g, L) -> (
     M := g.Inputs;
-    n := M.Size; 
-    row := floor sqrt n; 
+    row := M.Cols; 
     evalA := specialize(M, L); -- valueList
     squareMatrixList := toList (0..(row-1)) / (i -> (
         toList (0..(row-1)) / (j -> evalA#(i*row + j))
@@ -173,7 +173,7 @@ specialize (DetHMatrixGate, InputValueTable) := (g, L) -> (
 diff (InputHMatrixGate, DetHMatrixGate) := (x,g) -> (
     M := g.Inputs;
     A := M.Elements;
-    n := floor(sqrt(M.Size)); 
+    n := M.Rows; 
     returnL := (0..n-1) / (i -> 
         detHMatrixGate(hMatrixGate (toList (0..(n*n-1)) / (j -> 
                 if j >= i*n and j < (i+1)*n then diff(x, A#j) else A#j), n*n)));
@@ -201,6 +201,7 @@ diff (InputHMatrixGate, ElementHMatrixGate) := (x,g) -> (
     elementHMatrixGate(diffM, last g.Inputs) 
     )
 elementHMatrixGate = method()
+-- assumes single index to index an element
 elementHMatrixGate (HMatrixGate, ZZ) := (M, i) -> (
     if i < 0 then error "index < 0";
     innerElement := new ElementHMatrixGate from {
@@ -208,7 +209,8 @@ elementHMatrixGate (HMatrixGate, ZZ) := (M, i) -> (
         };
     new HMatrixGate from {
         Elements => {innerElement},
-        Size => 1
+        Rows => 1,
+        Cols => 1
     }
     )
 
@@ -221,16 +223,14 @@ net BigSumHMatrixGate := g -> (
     )
 bigSumHMatrixGate = method()
 bigSumHMatrixGate(HMatrixGate, HMatrixGate) := (M, N) -> (
-    if length M != length N then error "M and N must have the same length";
-    innerElement := new BigSumHMatrixGate from {
-            Inputs => (M, N)
-            };
-    new HMatrixGate from {
-        Elements => {innerElement},
-        Size => 1
-        }
+    if M.Rows != N.Rows or M.Cols != N.Cols then error "M and N must have same dimensions";
+    new BigSumHMatrixGate from {
+            Inputs => (M, N),
+            Rows => M.Rows,
+            Cols => M.Cols
+            }
     )
-length BigSumHMatrixGate := g -> length first g.Inputs -- assumes both inputs have the same length
+length BigSumHMatrixGate := g -> g.Rows * g.Cols
 specialize (BigSumHMatrixGate, InputValueTable) := (g, L) -> (
     M := first g.Inputs; 
     N := last g.Inputs; 
@@ -252,29 +252,23 @@ net BigProductHMatrixGate := g -> (
     "(" | net M | "*" | net N | ")"
     )
 bigProductHMatrixGate = method()
--- I is a list of 3 integers denoting the size of M and N respectively
-bigProductHMatrixGate(List, HMatrixGate, HMatrixGate) := (I, M, N) -> (
-    innerElement := new BigProductHMatrixGate from {
-            Inputs => (I, M, N)
-            };
-    new HMatrixGate from {
-        Elements => {innerElement},
-        Size => 1
-        }
+bigProductHMatrixGate(HMatrixGate, HMatrixGate) := (M, N) -> (
+    if M.Cols != N.Rows then error "M.Cols must equal N.Rows";
+    new BigProductHMatrixGate from {
+            Inputs => (M, N),
+            Rows => M.Rows,
+            Cols => N.Cols
+            }
     )
 length BigProductHMatrixGate := g -> (
-    I := (g.Inputs)#0;
-    n := I#0;
-    m := I#2;
-    n*m
-)
+    g.Rows * g.Cols
+    )
 specialize (BigProductHMatrixGate, InputValueTable) := (g, L) -> (
-    M := (g.Inputs)#1; 
-    N := (g.Inputs)#2; 
-    I := (g.Inputs)#0;
-    n := I#0;
-    k := I#1;
-    m := I#2;
+    M := first g.Inputs;
+    N := last g.Inputs; 
+    n := M.Rows;
+    k := M.Cols;
+    m := N.Cols;
     evalA := specialize (M, L);
     evalB := specialize (N, L);
     listMatrixA := toList (0..(n-1)) / (i -> (
@@ -289,13 +283,12 @@ specialize (BigProductHMatrixGate, InputValueTable) := (g, L) -> (
     resultAxB
     )
 diff (InputHMatrixGate, BigProductHMatrixGate) := (x,g) -> (
-    M := (g.Inputs)#1; 
-    N := (g.Inputs)#2; 
-    I := (g.Inputs)#0;
+    M := first g.Inputs; 
+    N := last g.Inputs; 
 
     bigSumHMatrixGate(
-        bigProductHMatrixGate(I, M, diff(x, N)),
-        bigProductHMatrixGate(I, diff(x, M), N)
+        bigProductHMatrixGate(M, diff(x, N)),
+        bigProductHMatrixGate(diff(x, M), N)
         ))
 
 SolveHMatrixGate = new Type of HMatrixGate
@@ -313,26 +306,23 @@ solveHMatrixGate = method()
 solveHMatrixGate(HMatrixGate, HMatrixGate) := (M, N) -> (
     A := M.Elements;
     b := N.Elements;
-    n := length N; -- assume M is a square matrix
+    n := length N; 
 
-    if #A != n^2 then error "A is not matching the expected size of the matrix";
-    if #b != n then error "b is not matching the expected size of the matrix";
-    innerElement := new SolveHMatrixGate from {
-        Inputs => (M, N)    
-        };
-    new HMatrixGate from {
-        Elements => {innerElement},
-        Size => n
-    }
+    if M.Rows != n or M.Cols != n then error "A is not matching the expected size of the matrix";
+    if N.Rows != n then error "b is not matching the expected size of the matrix";
+    new SolveHMatrixGate from {
+        Inputs => (M, N), 
+        Rows => n,
+        Cols => 1
+        }
     )
 length SolveHMatrixGate := g -> (
-    N := last g.Inputs; 
-    length N
+    g.Rows
 )
 specialize (SolveHMatrixGate, InputValueTable) := (g, L) -> (
     M := first g.Inputs;
     N := last g.Inputs;
-    n := length N;
+    n := length g;
     evalA := specialize (M, L);
     evalB := specialize (N, L);
     listMatrixA := toList (0..(n-1)) / (i -> (
@@ -349,7 +339,7 @@ specialize (SolveHMatrixGate, InputValueTable) := (g, L) -> (
 diff (InputHMatrixGate, SolveHMatrixGate) := (x,g) -> (
     M := first g.Inputs; 
     N := last g.Inputs; 
-    n := length N; -- assume length b is n (from solveHMatrixGate assertion)
+    n := length g; 
     A := M.Elements;
     b := N.Elements;
 
@@ -360,19 +350,19 @@ diff (InputHMatrixGate, SolveHMatrixGate) := (x,g) -> (
     -- SolveHMatrixGate for A and each partial diff column of A
     -- list of length n with SolveHMatrixGate entries
     partialOfA := toList (0..(n-1))/(i -> (
-                solveHMatrixGate(M, hMatrixGate(toList(0..(n-1)) / (j -> diff(x, A#(i*n+j))), n))));
+                solveHMatrixGate(M, hMatrixGate(toList(0..(n-1)) / (j -> diff(x, A#(i*n+j))), n, 1))));
     flatListForMatrix := flatten (toList (0..(n-1)) / (i -> (
         toList(0..(n-1)) / (j -> elementHMatrixGate(partialOfA#j, i) 
         ))
     ));
-    colMatrixHMatrixGates := hMatrixGate(flatListForMatrix, n*n);
+    colMatrixHMatrixGates := hMatrixGate(flatListForMatrix, n, n);
 
     -- convert list to vector
     partialOfb := toList b / (e -> diff(x, e));
-    partialN := hMatrixGate(partialOfb, n);
+    partialN := hMatrixGate(partialOfb, n, 1);
 
     -- see overleaf for explanation
-    bigSumHMatrixGate(bigProductHMatrixGate({n, n, 1}, colMatrixHMatrixGates, solveHMatrixGate(M, N)), solveHMatrixGate(M, partialN))
+    bigSumHMatrixGate(bigProductHMatrixGate(colMatrixHMatrixGates, solveHMatrixGate(M, N)), solveHMatrixGate(M, partialN))
     
     )
 
@@ -384,6 +374,19 @@ HSLP = new Type of HashTable
 -- printing functions for SLP
 PrintIndices = new Type of MutableHashTable
 newPrintIndices = assignmentSymbol -> (p := new PrintIndices; p#"assignmentSymbol"=assignmentSymbol; p#"#consts"=p#"#vars"=p#"#lines"=0; p#"gates" = new MutableHashTable; p)
+
+hMatrixGateType = method() -- return string of specific type of HMatrixGate 
+hMatrixGateType (HMatrixGate) := g -> (
+    if instance(g, InputHMatrixGate) then "InputHMatrixGate"
+    else if instance(g, SumHMatrixGate) then "SumHMatrixGate"
+    else if instance(g, ProductHMatrixGate) then "ProductHMatrixGate"
+    else if instance(g, DetHMatrixGate) then "DetHMatrixGate"
+    else if instance(g, SolveHMatrixGate) then "SolveHMatrixGate"
+    else if instance(g, ElementHMatrixGate) then "ElementHMatrixGate"
+    else if instance(g, BigSumHMatrixGate) then "BigSumHMatrixGate"
+    else if instance(g, BigProductHMatrixGate) then "BigProductHMatrixGate"
+    else "HMatrixGate" -- default case
+    )
 
 printSLP = method()
 printSLP (List, List) := (I, O) -> (
@@ -406,6 +409,8 @@ printHMatrixGate (InputHMatrixGate, PrintIndices) := (g,p) -> if (p#"gates")#?g 
 	);
     (p#"gates")#g
     )
+
+
 
 printHMatrixGate (SumHMatrixGate, PrintIndices) := (g,p) -> (
     if (p#"gates")#?g then (p#"gates")#g else (
@@ -439,26 +444,90 @@ printHMatrixGate (DetHMatrixGate, PrintIndices) := (g,p) -> (
     (p#"gates")#g
     ))
 
-printHMatrixGate (HMatrixGate, PrintIndices) := (g,p) -> (
+printHMatrixGate (SolveHMatrixGate, PrintIndices) := (g,p) -> (
     if (p#"gates")#?g then (p#"gates")#g else (
-    a := g.Elements;
-    listLines := a / (h -> (printHMatrixGate(h,p))#0);
+    A := g.Inputs#0;
+    b := g.Inputs#1;
+    val := "solve{" | (printHMatrixGate(A,p))#0 | ", " | (printHMatrixGate(b,p))#0 | "}";
+    idx := "R"|toString p#"#lines";
+    (p#"gates")#g = {idx, val};
+    p#"#lines" = p#"#lines" + 1;
+    (p#"gates")#g
+    ))
 
-    c := inputHMatrixGate g.Size;
+
+
+printHMatrixGate (BigSumHMatrixGate, PrintIndices) := (g,p) -> (
+    if (p#"gates")#?g then (p#"gates")#g else (
+    M := g.Inputs#0;
+    N := g.Inputs#1;
+    val := "matrixSum(" | (printHMatrixGate(M,p))#0 | ", " | (printHMatrixGate(N,p))#0 | ")";
+    idx := "R"|toString p#"#lines";
+    (p#"gates")#g = {idx, val};
+    p#"#lines" = p#"#lines" + 1;
+    (p#"gates")#g
+    ))
+
+printHMatrixGate (BigProductHMatrixGate, PrintIndices) := (g,p) -> (
+    if (p#"gates")#?g then (p#"gates")#g else (
+    M := g.Inputs#0;
+    N := g.Inputs#1;
+
+    val := "matrixProduct(" | (printHMatrixGate(M,p))#0 | ", " | (printHMatrixGate(N,p))#0 | ")";
+    idx := "R"|toString p#"#lines";
+    (p#"gates")#g = {idx, val};
+    p#"#lines" = p#"#lines" + 1;
+    (p#"gates")#g
+    ))
+
+printHMatrixGate (ElementHMatrixGate, PrintIndices) := (g,p) -> (
+    if (p#"gates")#?g then (p#"gates")#g else (
+    M := g.Inputs#0;
+    i := g.Inputs#1;
+
+    c := inputHMatrixGate i;
 
     if not (p#"gates")#?c then (
         (p#"gates")#c = {"C"|toString p#"#consts", net c};
         p#"#consts" = p#"#consts" + 1;  
-        << net (p#"gates")#c << endl;
+
     );
 
-    val := "matrix{" | toString listLines | ", " | toString ((p#"gates")#c)#0 | "}";
+    val := (printHMatrixGate(M,p))#0 | "[" | ((p#"gates")#c)#0 | "]";
+    idx := "R"|toString p#"#lines";
+    (p#"gates")#g = {idx, val};
+    p#"#lines" = p#"#lines" + 1;
+    (p#"gates")#g
+    ))
+
+printHMatrixGate (HMatrixGate, PrintIndices) := (g,p) -> (
+    if (p#"gates")#?g then (p#"gates")#g else (
+
+    a := g.Elements;
+
+    listLines := a / (h -> (printHMatrixGate(h,p))#0);
+
+    r := inputHMatrixGate g.Rows;
+    c := inputHMatrixGate g.Cols;
+
+    if not (p#"gates")#?r then (
+        (p#"gates")#r = {"C"|toString p#"#consts", net r};
+        p#"#consts" = p#"#consts" + 1;  
+
+    );
+
+    if not (p#"gates")#?c then (
+        (p#"gates")#c = {"C"|toString p#"#consts", net c};
+        p#"#consts" = p#"#consts" + 1;  
+
+    );
+
+    val := "matrix" | toString listLines | " " | toString ((p#"gates")#r)#0 | "x" | toString ((p#"gates")#c)#0;
 
     idx := "R"|toString p#"#lines";
     (p#"gates")#g = {idx, val};
     p#"#lines" = p#"#lines" + 1;
     (p#"gates")#g
     ))
---
 
 end
