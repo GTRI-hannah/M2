@@ -176,7 +176,7 @@ diff (InputHMatrixGate, DetHMatrixGate) := (x,g) -> (
     n := M.Rows; 
     returnL := (0..n-1) / (i -> 
         detHMatrixGate(hMatrixGate (toList (0..(n*n-1)) / (j -> 
-                if j >= i*n and j < (i+1)*n then diff(x, A#j) else A#j), n*n)));
+                if j >= i*n and j < (i+1)*n then diff(x, A#j) else A#j), n, n)));
     fold(plus, returnL)
     )
 
