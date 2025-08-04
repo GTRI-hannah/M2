@@ -65,7 +65,7 @@ inputHMatrixGate Thing := a -> new InputHMatrixGate from {
     Name => a
     }
 isConstant InputHMatrixGate := a -> (instance(a.Name,Number) or instance(a.Name, RingElement)) 
-net InputHMatrixGate := g -> net g.Name
+net InputHMatrixGate := g -> "'" | net g.Name | "'"
 length InputHMatrixGate := g -> 1 
 specialize (InputHMatrixGate, InputValueTable) := (g, L) -> valueList {
     if isConstant g then g.Name else 
@@ -507,22 +507,7 @@ printHMatrixGate (HMatrixGate, PrintIndices) := (g,p) -> (
 
     listLines := a / (h -> (printHMatrixGate(h,p))#0);
 
-    r := inputHMatrixGate g.Rows;
-    c := inputHMatrixGate g.Cols;
-
-    if not (p#"gates")#?r then (
-        (p#"gates")#r = {"C"|toString p#"#consts", net r};
-        p#"#consts" = p#"#consts" + 1;  
-
-    );
-
-    if not (p#"gates")#?c then (
-        (p#"gates")#c = {"C"|toString p#"#consts", net c};
-        p#"#consts" = p#"#consts" + 1;  
-
-    );
-
-    val := "matrix" | toString listLines | " " | toString ((p#"gates")#r)#0 | "x" | toString ((p#"gates")#c)#0;
+    val := "matrix" | toString listLines | " (" | toString g.Rows | ", " | toString g.Cols | ")";
 
     idx := "R"|toString p#"#lines";
     (p#"gates")#g = {idx, val};
