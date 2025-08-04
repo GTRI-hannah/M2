@@ -62,7 +62,9 @@ hMatrixGate (List, ZZ, ZZ) := (A, r, c) -> (
 InputHMatrixGate = new Type of HMatrixGate -- "abstract" unit of input
 inputHMatrixGate = method()
 inputHMatrixGate Thing := a -> new InputHMatrixGate from {
-    Name => a
+    Name => a,
+    Rows => 1,
+    Cols => 1
     }
 isConstant InputHMatrixGate := a -> (instance(a.Name,Number) or instance(a.Name, RingElement)) 
 net InputHMatrixGate := g -> "'" | net g.Name | "'"
@@ -95,7 +97,9 @@ HMatrixGate + HMatrixGate := (a,b) -> (
     if a===zeroHMatrixGate then b else 
     if b===zeroHMatrixGate then a else 
     new SumHMatrixGate from {
-      	Inputs => (a,b)
+      	Inputs => (a,b),
+        Rows => 1,
+        Cols => 1
       	} 
     )
 sumHMatrixGate = method()
@@ -107,7 +111,9 @@ sumHMatrixGate(HMatrixGate) := (M) -> (
     if a===zeroHMatrixGate then b else 
     if b===zeroHMatrixGate then a else 
     new SumHMatrixGate from {
-      	Inputs => (a,b)
+      	Inputs => (a,b),
+        Rows => 1,
+        Cols => 1
       	} 
     )
 length SumHMatrixGate := g -> 1 
@@ -122,7 +128,9 @@ HMatrixGate * HMatrixGate := (a,b) -> (
     if a===oneHMatrixGate then b else 
     if b===oneHMatrixGate then a else 
     new ProductHMatrixGate from {
-        Inputs => (a,b)
+        Inputs => (a,b),
+        Rows => 1,
+        Cols => 1
         } 
     )
 productHMatrixGate = method()
@@ -135,7 +143,9 @@ productHMatrixGate(HMatrixGate) := (M) -> (
     if a===oneHMatrixGate then b else 
     if b===oneHMatrixGate then a else 
     new ProductHMatrixGate from {
-        Inputs => (a,b)
+        Inputs => (a,b),
+        Rows => 1,
+        Cols => 1
         } 
     )
 length ProductHMatrixGate := g -> 1
@@ -396,6 +406,7 @@ printSLP (List, List) := (I, O) -> (
     O / (g -> printHMatrixGate(g, p));
     unsortedLines := values p#"gates" / (l -> l#0 | p#"assignmentSymbol" | l#1 );
     sort unsortedLines / (slpLine -> << slpLine << endl);
+    O / (g -> << "OUTPUT: " << ((p#"gates")#g)#0 << p#"assignmentSymbol" << ((p#"gates")#g)#1  << endl);
     )
 
 printHMatrixGate = method()
@@ -437,7 +448,7 @@ printHMatrixGate (ProductHMatrixGate, PrintIndices) := (g,p) -> (
 printHMatrixGate (DetHMatrixGate, PrintIndices) := (g,p) -> (
     if (p#"gates")#?g then (p#"gates")#g else (
     m := g.Inputs;
-    val := "det" | (printHMatrixGate(m,p))#0;
+    val := "det(" | (printHMatrixGate(m,p))#0 | ")";
     idx := "R"|toString p#"#lines";
     (p#"gates")#g = {idx, val};
     p#"#lines" = p#"#lines" + 1;

@@ -24,11 +24,30 @@ b = a + y
 c = hMatrixGate({b}, 1, 1)
 d = inputHMatrixGate 3 
 e = c + d 
-printSLP ({x, y}, {e})
+printSLP ({x, y}, {e, a})
 
-a = x + 3
-b = hMatrixGate({a, x, y, y}, 2, 2)
-c = hMatrixGate({x, y}, 2, 1)
-d = bigProductHMatrixGate(b, c)
+-- test 1, arithmetic gates (for C compiler)
+restart
+needs "../HGates.m2"
+declareVariable \ {x, y}
+a = x + x
+b = a * x
+c = hMatrixGate({y}, 1, 1)
+d = c + b 
+d.Cols 
+a.Rows 
+e = bigProductHMatrixGate(d, a)
+f = bigSumHMatrixGate(e, c)
+printSLP ({x, y}, {e, f})
+
+-- test 2, scalars and determinant gate (for C compiler)
+restart
+needs "../HGates.m2"
+declareVariable \ {x, y}
+a = inputHMatrixGate 3
+b = hMatrixGate({x, a, y, 0}, 2, 2)
+c = detHMatrixGate(b)
+d = c + a
 printSLP ({x, y}, {d})
+
 

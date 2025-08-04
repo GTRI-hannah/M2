@@ -1,8 +1,14 @@
 # Makefile for SLP Compiler
+# run make all in terminal
+# run ./slp_compiler to generate test cases, then run
+# $ gcc -o test1 test1_output.c matrix.c
+# $ ./test1
+# input appropriate variables
+
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -g
+CFLAGS = -Wall -Wextra -std=c99 -g 
 TARGET = slp_compiler
-SOURCES = slp_compiler.c matrix.c
+SOURCES = slp_compiler.c matrix.c 
 HEADERS = matrix.h
 OBJECTS = $(SOURCES:.c=.o)
 
