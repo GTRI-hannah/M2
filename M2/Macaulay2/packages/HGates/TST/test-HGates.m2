@@ -1,18 +1,67 @@
 restart
 needs "../HGates.m2"
 declareVariable \ {x,y,z,w}
-x  -- expect InputHMatrixGate
-x + y -- expect SumHMatrixGate
-h = hMatrixGate({x,y}, 2, 1)
-j = hMatrixGate({h, z,w}, 2, 2)
-k = hMatrixGate({h, z+x*x, x+x, j}, 4, 2) 
-diff(x, h) 
-diff(x, j)
-diff(x, k)
-j + k -- expect error
-bigSumHMatrixGate(j, j) 
+R = RR_53; -- using to unify ring for "matrix" function
+x0 = inputValueTable {x => 2_R, y => pi_R, z => 0_R, w => 1/2_R}
 
-h = hMatrixGate({x,y}, 2, 1)
-j = hMatrixGate({h, z,w}, 2, 2)
-s = solveHMatrixGate(j, h) 
-diff(x, s)
+-- check HGates (not HMatrixGates)
+-- net, length, diff, specialize
+g_1 = x + x
+g_2 = g_1 * y 
+g_3 = g_2 * zeroHGate
+g_4 = g_3 + z 
+g_5 = g_4 * w
+
+-- expect 1 for all
+length g_1 
+length g_2 
+length g_3
+length g_4 
+length g_5 
+
+diff(x, g_1) -- expect 1+1
+diff(z, g_4) -- expect 1
+diff(w, g_5) -- expect z
+specialize(g_1, x0) -- expect 4
+specialize(g_2, x0) -- expect 4*pi
+specialize(diff(x, g_5), x0) -- expect 0
+
+-- check DetHGate
+M = hMatrixGate({x, y, z, x}, 2, 2)
+g_1 = detHGate(M)
+g_2 = diff(x, g_1)
+g_3 = elementHGate(M, 0)
+elementHGate(g_1, 0) -- expect type error 
+diff(x, g_3)
+
+specialize(g_1, x0)
+specialize(g_2, x0) 
+specialize(g_3, x0)
+
+length M 
+length g_1 
+length g_3 
+
+-- check HMatrixGate
+M = hMatrixGate({x, y, z, w}, 2, 2 )
+N = hMatrixGate({x, y}, 2, 1)
+O = hMatrixGate({x, y, z, oneHGate}, 2, 2)
+g_1 = solveHMatrixGate(M, N)
+g_2 = productHMatrixGate(M, g_1)
+g_3 = sumHMatrixGate(N, g_2)
+g_4 = sumHMatrixGate(M, O)
+
+diff(x, M)
+diff(x, g_1)
+diff(y, g_3)
+dM = diff(x, M)
+dO = diff(x, O)
+sumHMatrixGate(dM, dO) -- not sure why this is printing M + O
+diff(x, g_4) -- not sure why this is printing M + O
+
+specialize(g_3, x0 )
+specialize(g_4, x0) 
+specialize(sumHMatrixGate(dM, dO), x0) -- evaluation correct
+
+
+
