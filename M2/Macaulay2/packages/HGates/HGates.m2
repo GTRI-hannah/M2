@@ -178,13 +178,13 @@ specialize (HMatrixGate, InputValueTable) := (G, L) -> (
 hMatrixGate = method()  
 hMatrixGate (List, ZZ, ZZ) := (A, r, c) -> (
     if not all(A, (e -> instance(e, HGate))) then error "input is not a list of HGates";
-    tempA := flatten {A/(e -> if length e == 1 then e 
-                                else (tempe := flatten e;
-                                    tempe.Elements
-                                ))};
-    AFlatten := flatten tempA; -- flatten the list of HMatrixGates
+    --tempA := flatten {A/(e -> if length e == 1 then e 
+    --                           else (tempe := flatten e;
+    --                                tempe.Elements
+    --                            ))};
+    --AFlatten := flatten tempA; -- flatten the list of HMatrixGates
     new HMatrixGate from {
-        Elements => AFlatten,
+        Elements => A,
         Rows => r,
         Cols => c
         }
@@ -215,8 +215,10 @@ length SumHMatrixGate := S -> S.Rows * S.Cols
 specialize (SumHMatrixGate, InputValueTable) := (S, L) -> (
     G := first S.Inputs; 
     H := last S.Inputs; 
-    evalG := specialize (G, L);
-    evalH := specialize (H, L);
+    
+    evalG := flatten specialize (G, L);
+    evalH := flatten specialize (H, L);
+
     n := #evalG;
     valueList toList (0..(n-1))/(i -> evalG#i + evalH#i) 
     )
@@ -320,6 +322,7 @@ net SolveHMatrixGate := S -> (
     )
 solveHMatrixGate = method()
 solveHMatrixGate(HMatrixGate, HMatrixGate) := (G, H) -> (
+
     A := G.Elements;
     b := H.Elements;
     n := length H; 
@@ -382,8 +385,114 @@ diff (InputHGate, SolveHMatrixGate) := (x,S) -> (
     
     )
 
+-- method for getting x'(t) (see Section on Predictors in overleaf)
+-- t: InputHGate for time
+-- X: HMatrixGate column vector where Elements is a list of InputHGates
+c = method()
+c (InputHGate, HMatrixGate, HMatrixGate) := (t, X, F) -> (
+    assert (X.Cols == 1 and all(X.Elements, (x -> instance(x, InputHGate))));
+    -- for each column in F, diff by x in X
+    -- each f in F.Elements is an InputHGate
+    nestedL := F.Elements / (f -> X.Elements / (x -> minusOneHGate * diff(x, f)));
+
+    n := #nestedL; -- number rows
+    m := #(nestedL#0); -- number cols
+    flatL := flatten nestedL;
+    dFdx := hMatrixGate(flatL, n, m);
+    dFdt := diff(t, F);
+    solveHMatrixGate(dFdx, dFdt)
+    )
+
+PredictorHMatrixGate = new Type of HMatrixGate
+net PredictorHMatrixGate := G -> (
+    "predictor"
+    )
+predictorHMatrixGate = method()
+-- based on the trapezoid predictor 
+-- note: H.Elements = {T0, X0}
+-- T0.Elements = {t0, t1}
+-- X0.Elements = {InputHGate, ..}
+predictorHMatrixGate (HMatrixGate,
+        InputHGate, HMatrixGate, HMatrixGate) := (H, t, X, F) -> (
+    X0 := last H.Elements;
+    n := length X0;
+    T0 := first H.Elements;
+    << net H << endl;
+    t0 := first T0.Elements;
+    t1 := last T0.Elements;
+    c1 := c(t, X, F);
+    c2 := subGate (t, t0, c1);
+    
+    (0..n-1) / (i -> c2 = subGate((X.Elements)#i, (X0.Elements)#i, c2));
+
+    t2 := minusOneHGate * t0;
+    tfirst := t1 + t2;
+    cfirst := scalarProductHMatrixGate(tfirst, c2);
+    h1 := scalarProductHMatrixGate(tfirst, cfirst);
+    Xtang := sumHMatrixGate(X0, h1);
+    c4 := c2;
+    (0..n-1) / (i -> c4 = subGate((X.Elements)#i, elementHGate(Xtang, i), c4));
+
+    csecond := subGate (t, t1, c4);
+    h2 := (inputHGate 0.5) * tfirst;
+    c5 := sumHMatrixGate(cfirst, csecond);
+    h3 := scalarProductHMatrixGate(h2, c5);
+
+    new PredictorHMatrixGate from {
+        Input => sumHMatrixGate(X0, h3)
+    }
+    )
+diff (InputHGate, PredictorHMatrixGate) := (x,S) -> (
+    diff (x, S.Input)
+    )
+specialize (PredictorHMatrixGate, InputValueTable) := (S, L) -> (
+    specialize (S.Input, L)
+    )
 
 -- H version of Straight-line Programs ---------------------------------------------
+-- substitute all instances of x with y 
+-- G[x => y]
+subGate = method()
+-- either y is an InputHGate or an ElementHGate
+subGate (InputHGate, HGate, HGate) := (x, y, G) -> (
+    if instance(G, InputHGate) then (
+        if toString x.Name == toString G.Name then y else G
+    )
+    else if instance(G, SumHGate) then (
+        H1 := subGate(x, y, first G.Inputs);
+        H2 := subGate(x, y, last G.Inputs);
+        H1 + H2
+    ) else if instance(G, ProductHGate) then (
+        H3 := subGate(x, y, first G.Inputs);
+        H4 := subGate(x, y, last G.Inputs);
+        H3 * H4
+    ) else if instance(G, DetHGate) then (
+        H5 := subGate(x, y, G.Input);
+    ) else if instance(G, ElementHGate) then (
+        H6 := subGate(x, y, first G.Inputs);
+        elementHGate(H6, last G.Inputs)
+    ) else if instance(G, SumHMatrixGate) then (
+        H7 := subGate(x, y, first G.Inputs);
+        H8 := subGate(x, y, last G.Inputs);
+        sumHMatrixGate(H7, H8)
+    ) else if instance(G, ProductHMatrixGate) then (
+        H9 := subGate(x, y, first G.Inputs);
+        H10 := subGate(x, y, last G.Inputs);
+        productHMatrixGate(H9, H10)
+    ) else if instance(G, SolveHMatrixGate) then (
+        H11 := subGate(x, y, first G.Inputs);
+        H12 := subGate(x, y, last G.Inputs);
+        solveHMatrixGate(H11, H12)
+    ) else if instance(G, ScalarProductHMatrixGate) then (
+        H13 := subGate(x, y, first G.Inputs);
+        H14 := subGate(x, y, last G.Inputs);
+        scalarProductHMatrixGate(H13, H14)
+    ) else if instance(G, HMatrixGate) then ( -- note, HMatrixGate must be at the bottom
+        A1 := G.Elements / (H -> subGate(x, y, H));
+        hMatrixGate(A1, G.Rows, G.Cols)
+    ) else error "sub not defined for this type of HGate"
+    )
+
 
 -- printing functions for SLP
 PrintIndices = new Type of MutableHashTable
