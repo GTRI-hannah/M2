@@ -403,10 +403,6 @@ c (InputHGate, HMatrixGate, HMatrixGate) := (t, X, F) -> (
     solveHMatrixGate(dFdx, dFdt)
     )
 
-PredictorHMatrixGate = new Type of HMatrixGate
-net PredictorHMatrixGate := G -> (
-    "predictor"
-    )
 predictorHMatrixGate = method()
 -- based on the trapezoid predictor 
 -- note: H.Elements = {T0, X0}
@@ -437,16 +433,7 @@ predictorHMatrixGate (HMatrixGate,
     h2 := (inputHGate 0.5) * tfirst;
     c5 := sumHMatrixGate(cfirst, csecond);
     h3 := scalarProductHMatrixGate(h2, c5);
-
-    new PredictorHMatrixGate from {
-        Input => sumHMatrixGate(X0, h3)
-    }
-    )
-diff (InputHGate, PredictorHMatrixGate) := (x,S) -> (
-    diff (x, S.Input)
-    )
-specialize (PredictorHMatrixGate, InputValueTable) := (S, L) -> (
-    specialize (S.Input, L)
+    sumHMatrixGate(X0, h3)
     )
 
 -- H version of Straight-line Programs ---------------------------------------------
@@ -498,6 +485,8 @@ subGate (InputHGate, HGate, HGate) := (x, y, G) -> (
 PrintIndices = new Type of MutableHashTable
 newPrintIndices = assignmentSymbol -> (p := new PrintIndices; p#"assignmentSymbol"=assignmentSymbol; p#"#consts"=p#"#vars"=p#"#lines"=0; p#"gates" = new MutableHashTable; p)
 
+-- note: use the class(X) function to return class of X
+-- note: can also use showStructure "SumHMatrixGate"
 hGateType = method() -- return string of specific type of HMatrixGate 
 hGateType (HGate) := g -> (
     if instance(g, InputHGate) then "InputHGate"
