@@ -112,7 +112,10 @@ h3 = h2 * x
 F = hMatrixGate({h3}, 1, 1)
 X = hMatrixGate({x}, 1, 1)
 p = predictorHMatrixGate(H, t, X, F)
+showStructure SumHMatrixGate
+showStructure p
 
 L = inputValueTable {y => 2_R, s_0 => 1_R, s_1 => 1.1_R}
 specialize(p, L)
 
+inputHGate (-1/1.1 * 2)
