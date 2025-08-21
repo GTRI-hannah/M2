@@ -405,6 +405,7 @@ c (InputHGate, HMatrixGate, HMatrixGate) := (t, X, F) -> (
 
 predictorHMatrixGate = method()
 -- based on the trapezoid predictor 
+-- H denotes a holder variable to store values
 -- note: H.Elements = {T0, X0}
 -- T0.Elements = {t0, t1}
 -- X0.Elements = {InputHGate, ..}
@@ -434,6 +435,21 @@ predictorHMatrixGate (HMatrixGate,
     c5 := sumHMatrixGate(cfirst, csecond);
     h3 := scalarProductHMatrixGate(h2, c5);
     sumHMatrixGate(X0, h3)
+    )
+
+HMap = new Type of HashTable
+net HMap := H -> (
+    concatenateNets {"HMap(", H.InputGates, ") =", H.OutputGates}
+    )
+hMap = method()
+hMap(List, List) := (I, O) -> (
+    -- assume that I contains variables in elements of O
+    if not all(I, (e -> instance(e, HGate))) then error "input is not a list of HGates";
+    if not all(O, (e -> instance(e, HGate))) then error "output is not a list of HGates";
+    new HMap from {
+            InputGates => I,
+            OutputGates => O
+            }
     )
 
 -- H version of Straight-line Programs ---------------------------------------------
@@ -480,13 +496,19 @@ subGate (InputHGate, HGate, HGate) := (x, y, G) -> (
     ) else error "sub not defined for this type of HGate"
     )
 
+-- H[x => y]
+subMap = method()
+subMap (InputHGate, InputHGate, HMap) := (x, y, H) -> (
+
+    hMap (H.InputGates / (g -> subGate(x, y, g)), H.OutputGates / (g -> subGate(x, y, g)))
+)
 
 -- printing functions for SLP
 PrintIndices = new Type of MutableHashTable
 newPrintIndices = assignmentSymbol -> (p := new PrintIndices; p#"assignmentSymbol"=assignmentSymbol; p#"#consts"=p#"#vars"=p#"#lines"=0; p#"gates" = new MutableHashTable; p)
 
 -- note: use the class(X) function to return class of X
--- note: can also use showStructure "SumHMatrixGate"
+-- note: can also use showStructure class(X)
 hGateType = method() -- return string of specific type of HMatrixGate 
 hGateType (HGate) := g -> (
     if instance(g, InputHGate) then "InputHGate"
