@@ -64,6 +64,7 @@ endX0 = subGate(y_0, elementHGate(startX0, 0), newtonsOp(g))
 L = inputValueTable {s_0 => 0_R, s_1 => 0.1_R, y_1 => -.25_R}
 specialize (endX0, L) -- actual solution is 0, this is 0.411
 
+-- UNIVARIATE CASE
 restart
 needs "../HGates.m2"
 declareVariable \ {s_0, s_1, y_0, x, t}
@@ -99,3 +100,54 @@ for i from 1 to steps do (
 )
 
 betternextvalue -- possible solutions are 2, 3
+
+-- MULTIVARIATE CASE
+restart
+needs "../HGates.m2"
+declareVariable \ {t0, t1, x0, y0, z0, x, y, z, t}
+R = RR_53; -- using to unify ring for "matrix" function
+-- F = (x^3 - 3x^2 + 2x, y^2 - 2y -1, z^4 - 5z^3 + 6z^2)
+T0 = hMatrixGate({t0, t1}, 2, 1)
+X0 = hMatrixGate({x0, y0, z0}, 3, 1)
+initVars = hMatrixGate({T0, X0}, 2, 1)
+
+F = hMatrixGate({x*x*x - (inputHGate 3)*x*x + (inputHGate 2)*x, 
+    y*y - (inputHGate 2)*y - oneHGate, 
+    z*z*z*z - (inputHGate 5)*z*z*z + (inputHGate 6)*z*z}, 3, 1)
+G = hMatrixGate({x*x*x - oneHGate, 
+    y*y - oneHGate, 
+    z*z*z*z - oneHGate}, 3, 1)
+H = sumHMatrixGate(scalarProductHMatrixGate(oneHGate - t, G), scalarProductHMatrixGate(t, F))
+X = hMatrixGate({x, y, z}, 3, 1)
+p = predictorHMatrixGate(initVars, t, X, H)
+
+-- try with start 0, time step 1/steps
+xi = 1 
+yi = 1
+zi = 1
+steps = 10
+for i from 1 to steps do (
+    a = (1/steps)*(i-1);
+    b = (1/steps)*i;
+    L1 = inputValueTable {t0 => a_R, t1 => b_R, x0 => xi_R, y0 => yi_R, z0 => zi_R};
+    V1 = specialize(p, L1); 
+    xiN = V1#0; --xi next
+    yiN = V1#1; -- yi next
+    ziN = V1#2; --zi next
+
+    -- correct with Newton's method m times
+    m = 5;
+    for j from 1 to m do (
+        L2 = inputValueTable {t => b_R, x => xiN_R, y => yiN_R, z => ziN_R};
+        V2 = specialize(newtonsOp(hMap({X}, {H})), L2);
+        xiN = V2#0;
+        yiN = V2#1;
+        ziN = V2#2;
+    );
+    xi = xiN; 
+    yi = yiN;
+    zi = ziN;
+)
+
+<< "(x, y, z): (" << xiN << ", " << yiN << ", " << ziN << ")" << endl;
+<< "evaluate F: " << specialize(F, inputValueTable {x => xiN_R, y => yiN_R, z => ziN_R}) << endl;

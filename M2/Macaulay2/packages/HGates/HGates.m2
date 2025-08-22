@@ -417,14 +417,8 @@ diff (InputHGate, SolveHMatrixGate) := (x,S) -> (
 c = method()
 c (InputHGate, HMatrixGate, HMatrixGate) := (t, X, F) -> (
     assert (X.Cols == 1 and all(X.Elements, (x -> instance(x, InputHGate))));
-    -- for each column in F, diff by x in X
-    -- each f in F.Elements is an InputHGate
-    nestedL := F.Elements / (f -> X.Elements / (x -> minusOneHGate * diff(x, f)));
 
-    n := #nestedL; -- number rows
-    m := #(nestedL#0); -- number cols
-    flatL := flatten nestedL;
-    dFdx := hMatrixGate(flatL, n, m);
+    dFdx := jacobian (X, F);
     dFdt := diff(t, F);
     solveHMatrixGate(dFdx, dFdt)
     )
