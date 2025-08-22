@@ -286,8 +286,8 @@ diff (InputHGate, ScalarProductHMatrixGate) := (x,S) -> (
 specialize (ScalarProductHMatrixGate, InputValueTable) := (S, L) -> (
     g := first S.Inputs; 
     H := last S.Inputs; 
-    evalg := specialize (g, L);
-    evalH := specialize (H, L);
+    evalg := flatten specialize (g, L);
+    evalH := flatten specialize (H, L);
     n := #evalH;
     valueList toList (0..(n-1))/(i -> evalH#i * evalg) 
     )
@@ -444,26 +444,29 @@ predictorHMatrixGate (HMatrixGate,
     X0 := last H.Elements;
     n := length X0;
     T0 := first H.Elements;
-    << net H << endl;
+
     t0 := first T0.Elements;
     t1 := last T0.Elements;
     c1 := c(t, X, F);
+
+    -- substitute t, X with t_0, X_0
     c2 := subGate (t, t0, c1);
-    
     (0..n-1) / (i -> c2 = subGate((X.Elements)#i, (X0.Elements)#i, c2));
 
-    t2 := minusOneHGate * t0;
-    tfirst := t1 + t2;
-    cfirst := scalarProductHMatrixGate(tfirst, c2);
-    h1 := scalarProductHMatrixGate(tfirst, cfirst);
-    Xtang := sumHMatrixGate(X0, h1);
-    c4 := c2;
-    (0..n-1) / (i -> c4 = subGate((X.Elements)#i, elementHGate(Xtang, i), c4));
+    tDelta := t1 - t0;
+    cfirst := c2;
+    h1 := scalarProductHMatrixGate(tDelta, cfirst);
+    -- Xtang named after X value from tangent predictor
+    Xtang := sumHMatrixGate(X0, h1); -- X_0 + c(X_0, t_0)*tDelta
 
-    csecond := subGate (t, t1, c4);
-    h2 := (inputHGate 0.5) * tfirst;
-    c5 := sumHMatrixGate(cfirst, csecond);
-    h3 := scalarProductHMatrixGate(h2, c5);
+    -- substitute t, X with t_0 + tDelta = t_1, Xtang
+    c4 := subGate (t, t1, c1);
+    (0..n-1) / (i -> c4 = subGate((X.Elements)#i, elementHGate(Xtang, i), c4));
+    csecond := c4;
+
+    h2 := (inputHGate 0.5) * t1; -- t1/2
+    c5 := sumHMatrixGate(cfirst, csecond); -- c(X_0, t_0) + c(...)
+    h3 := scalarProductHMatrixGate(h2, c5); -- [c(X_0, t_0) + c(...)]*(t1/2)
     sumHMatrixGate(X0, h3)
     )
 
