@@ -352,13 +352,9 @@ net SolveHMatrixGate := S -> (
     )
 solveHMatrixGate = method()
 solveHMatrixGate(HMatrixGate, HMatrixGate) := (G, H) -> (
-
-    A := G.Elements;
-    b := H.Elements;
     n := length H; 
-
-    if G.Rows != n or G.Cols != n then error "A is not matching the expected size of the matrix";
-    if H.Rows != n then error "b is not matching the expected size of the matrix";
+    if H.Cols != 1 then error "b must have 1 column";
+    if G.Rows != n or G.Cols != n then error "A must be square, with dimension b.rows x b.rows";
     new SolveHMatrixGate from {
         Inputs => (G, H), 
         Rows => n,
