@@ -45,7 +45,7 @@ restart
 needs "../HGates.m2"
 declareVariable \ {x, y}
 a = inputHMatrixGate 3
-b = hMatrixGate({x, a, y, 0}, 2, 2)
+b = hMatrixGate({x, a, y, zeroHMatrixGate}, 2, 2)
 c = detHMatrixGate(b)
 d = c + a
 printSLP ({x, y}, {d})

@@ -68,6 +68,18 @@ length SumHGate := g -> 1
 specialize (SumHGate, InputValueTable) := (g, L) -> specialize(first g.Inputs, L) + specialize(last g.Inputs, L)
 diff (InputHGate, SumHGate) := (x,g) -> diff(x,first g.Inputs) + diff(x,last g.Inputs)
 
+-- G - H = G + (-1)*H
+HGate - HGate := (g,h) -> (
+    if (instance(g, HMatrixGate) and not instance(h, HMatrixGate)) then error "need to subtract same type";
+    if (instance(h, HMatrixGate) and not instance(g, HMatrixGate)) then error "need to subtract same type";
+    if (instance(g, HMatrixGate) and instance(h, HMatrixGate)) then 
+        if g.Rows != h.Rows or g.Cols != h.Cols then
+            error "need to subtract same dimension"
+        else sumHMatrixGate(g, scalarProductHMatrixGate(minusOneHGate, h))
+    else 
+        g + (minusOneHGate * h)
+    )
+
 ProductHGate = new Type of HGate
 net ProductHGate := g -> "(" | net first g.Inputs | "*" | net last g.Inputs | ")"
 HGate * HGate := (g,h) -> (
@@ -194,6 +206,24 @@ diff (InputHGate, HMatrixGate) := (x,G) -> (
     diffA := A/(e -> diff(x, e));
     hMatrixGate(diffA, G.Rows, G.Cols) -- diff each HMatrixGate in the list
     )
+-- X must be an mx1 vector of InputHGates
+-- G must be an nx1 vector of HGates, NOT HMatrixGates
+jacobian (HMatrixGate, HMatrixGate) := (X, G) -> (
+    if not instance(X, HMatrixGate) or not instance(G, HMatrixGate) then error "X, G must be HMatrixGates";
+    if not all(X.Elements, (e -> instance(e, InputHGate))) then error "X is not a matrix of InputHGates";
+    --if any(G.Elements, (g -> instance(g, HMatrixGate))) then error "G cannot contain HMatrixGates";
+    if X.Cols != 1 or G.Cols != 1 then error "column must be 1";
+    n := G.Rows;
+    m := X.Rows;
+    -- make column by column n x m matrix
+    E := X.Elements / (x -> diff(x, G));
+
+    flatListForMatrix := flatten (toList (0..(m-1)) / (i -> (
+        toList(0..(n-1)) / (j -> elementHGate(E#j, i) 
+        ))
+    ));
+    hMatrixGate(flatListForMatrix, n, m)
+)
 
 SumHMatrixGate = new Type of HMatrixGate
 net SumHMatrixGate := S -> (
@@ -451,6 +481,18 @@ hMap(List, List) := (I, O) -> (
             OutputGates => O
             }
     )
+-- Newton's method
+newtonsOp = method()
+newtonsOp(HMap) := g -> (
+    -- assume g.Inputs#0 = X: HMatrixGate of variables, g.Outputs#0 = G: HMatrixGate of functions
+    P := g.OutputGates#0;
+    Y := g.InputGates#0;
+    if not instance(P, HMatrixGate) or not instance(Y, HMatrixGate) then error "accepts only matrices";
+    -- assume square situation
+    if P.Rows != Y.Rows or P.Cols != Y.Cols or P.Cols != 1 then error "wrong dimensions";
+    J := jacobian(Y, P);
+    Y - solveHMatrixGate(J, P)
+)
 
 -- H version of Straight-line Programs ---------------------------------------------
 -- substitute all instances of x with y 
@@ -499,7 +541,6 @@ subGate (InputHGate, HGate, HGate) := (x, y, G) -> (
 -- H[x => y]
 subMap = method()
 subMap (InputHGate, InputHGate, HMap) := (x, y, H) -> (
-
     hMap (H.InputGates / (g -> subGate(x, y, g)), H.OutputGates / (g -> subGate(x, y, g)))
 )
 
