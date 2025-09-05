@@ -230,7 +230,7 @@ net SumHMatrixGate := S -> (
     G := first S.Inputs; 
     H := last S.Inputs; 
 
-    "(" | net M | "+" | net N | ")"
+    "(" | net G | "+" | net H | ")"
     )
 sumHMatrixGate = method()
 sumHMatrixGate(HMatrixGate, HMatrixGate) := (G, H) -> (
@@ -465,6 +465,8 @@ net HMap := H -> (
     concatenateNets {"HMap(", H.InputGates, ") =", H.OutputGates}
     )
 hMap = method()
+-- requires all inputs to be present
+-- eg hMap({x}, {x+y}) is incorrect, correct version is hMap({x, y}, {x+y})
 hMap(List, List) := (I, O) -> (
     -- assume that I contains variables in elements of O
     if not all(I, (e -> instance(e, HGate))) then error "input is not a list of HGates";
@@ -476,6 +478,8 @@ hMap(List, List) := (I, O) -> (
     )
 -- Newton's method
 newtonsOp = method()
+
+-- takes in an HMap and returns an HMap
 newtonsOp(HMap) := g -> (
     -- assume g.Inputs#0 = X: HMatrixGate of variables, g.Outputs#0 = G: HMatrixGate of functions
     P := g.OutputGates#0;
@@ -484,7 +488,7 @@ newtonsOp(HMap) := g -> (
     -- assume square situation
     if P.Rows != Y.Rows or P.Cols != Y.Cols or P.Cols != 1 then error "wrong dimensions";
     J := jacobian(Y, P);
-    Y - solveHMatrixGate(J, P)
+    hMap({Y}, {Y - solveHMatrixGate(J, P)})
 )
 
 -- H version of Straight-line Programs ---------------------------------------------
