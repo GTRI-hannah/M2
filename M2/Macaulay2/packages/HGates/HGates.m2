@@ -44,7 +44,14 @@ specialize (InputHGate, InputValueTable) := (g, L) -> valueList {
     }
 diff (InputHGate, InputHGate) := (x,y) -> if y === x then oneHGate else zeroHGate
 
+-- commonly used scalars
 oneHGate = inputHGate 1
+twoHGate = inputHGate 2
+threeHGate = inputHGate 3
+fourHGate = inputHGate 4
+fiveHGate = inputHGate 5
+sixHGate = inputHGate 6
+twelveHGate = inputHGate 12
 minusOneHGate = inputHGate(-1)
 zeroHGate = inputHGate 0
 
@@ -57,7 +64,8 @@ declareVariable Thing := g -> error "defined only for a Symbol or an IndexedVari
 SumHGate = new Type of HGate
 net SumHGate := g -> "(" | net first g.Inputs | "+" | net last g.Inputs | ")"
 HGate + HGate := (g,h) -> (
-    if (instance(g, HMatrixGate) or instance(h, HMatrixGate)) then error "add HMatrixGates using sumHMatrixGate";
+    if (instance(g, HMatrixGate) and instance(h, HMatrixGate)) then sumHMatrixGate(g, h) else 
+    if (instance(g, HMatrixGate) or instance(h, HMatrixGate)) then error "HGates must be either both field elements or both matrices" else
     if g===zeroHGate then h else 
     if h===zeroHGate then g else 
     new SumHGate from {
@@ -83,7 +91,9 @@ HGate - HGate := (g,h) -> (
 ProductHGate = new Type of HGate
 net ProductHGate := g -> "(" | net first g.Inputs | "*" | net last g.Inputs | ")"
 HGate * HGate := (g,h) -> (
-    if (instance(g, HMatrixGate) or instance(h, HMatrixGate)) then error "multiply HMatrixGates using productHMatrixGate";
+    if (instance(g, HMatrixGate) and instance(h, HMatrixGate)) then productHMatrixGate(g, h) else 
+    if instance(h, HMatrixGate) then scalarProductHMatrixGate(g, h) else
+    if instance(g, HMatrixGate) then scalarProductHMatrixGate(h, g) else
     if g===zeroHGate or h===zeroHGate then zeroHGate else 
     if g===oneHGate then h else 
     if h===oneHGate then g else 
@@ -207,7 +217,6 @@ diff (InputHGate, HMatrixGate) := (x,G) -> (
     hMatrixGate(diffA, G.Rows, G.Cols) -- diff each HMatrixGate in the list
     )
 -- X must be an mx1 vector of InputHGates
--- G must be an nx1 vector of HGates, NOT HMatrixGates
 jacobian (HMatrixGate, HMatrixGate) := (X, G) -> (
     if not instance(X, HMatrixGate) or not instance(G, HMatrixGate) then error "X, G must be HMatrixGates";
     if not all(X.Elements, (e -> instance(e, InputHGate))) then error "X is not a matrix of InputHGates";
@@ -224,6 +233,17 @@ jacobian (HMatrixGate, HMatrixGate) := (X, G) -> (
     ));
     hMatrixGate(flatListForMatrix, n, m)
 )
+
+--twoNorm = method() 
+-- assume two nx1 matrices (vector length n), return 2-norm
+--twoNorm (HMatrixGate) := (F) -> (
+--    if F.Cols != 1 then error "column must be 1";
+--    n := F.Rows;
+--    holderSum := fold(plus, (0..n-1)/(i -> ElementHGate(F, i)*ElementHGate(F, i)))
+--    SqrrtHGate(holderSum)
+--)
+-- TODO: add SqrrtHGate, 
+-- TODO: fix *, + to include HMatrixGates (ie remove resp HMatrixGate methods)
 
 SumHMatrixGate = new Type of HMatrixGate
 net SumHMatrixGate := S -> (
@@ -476,6 +496,11 @@ hMap(List, List) := (I, O) -> (
             OutputGates => O
             }
     )
+
+specialize (HMap, InputValueTable) := (H, L) -> (
+    flatten (H.OutputGates/(G -> specialize (G, L)))
+)
+
 -- Newton's method
 newtonsOp = method()
 
