@@ -86,6 +86,13 @@ while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= 0.1) do (
     track = track + 1
 )
 
+<< "Result: " << X1 << ", found after " << track << " iterations" << endl;
+X0 = X1;
+L = inputValueTable {x => X0#0, y => X0#1, z => X0#2};
+Ys = specialize(F_1, L)
+<< "Evaluation of F_1: " << Ys << ", error: " << sqrt fold(plus, ({1, 2, 3} - Ys)/(i -> i*i)) << endl;
+
+
 -- Subsection: Problems Using Newton's Method
 -- Subsubsection: Homotopy Continuation Problem
 -- Problem 3
