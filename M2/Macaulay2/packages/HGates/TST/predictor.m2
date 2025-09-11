@@ -14,13 +14,20 @@ initVars = hMatrixGate({T0, X0}, 2, 1)
 h = (inputHGate 5)*x*x*(oneHGate - t) + ((inputHGate 5)*x*x + (inputHGate 2)*x + oneHGate)*t
 H = hMatrixGate({h}, 1, 1)
 X = hMatrixGate({x}, 1, 1)
-p = predictorHMatrixGate(initVars, t, X, H)
+
+g = hMap({t, X}, {H})
+I = {s_0, s_1, X0}
+p = predictorTrapHMatrixGate(g, I)
+p1 = predictorTangHMatrixGate(g, I)
+p2 = predictorRK4HMatrixGate(g, I)
 
 showStructure p
 
 -- try with start 0, time step 0.1
 L = inputValueTable {s_0 => 0_R, s_1 => 0.1_R, y_0 => 0_R}
 predicted = specialize(p, L) 
+specialize(p1, L)
+specialize(p2, L)
 
 M = inputValueTable {t => 0_R, x => 0_R}
 cAbstract = c (t, X, H)

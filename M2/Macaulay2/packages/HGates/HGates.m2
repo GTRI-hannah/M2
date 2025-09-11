@@ -431,55 +431,6 @@ diff (InputHGate, SolveHMatrixGate) := (x,S) -> (
     
     )
 
--- method for getting x'(t) (see Section on Predictors in overleaf)
--- t: InputHGate for time
--- X: HMatrixGate column vector where Elements is a list of InputHGates
-c = method()
-c (InputHGate, HMatrixGate, HMatrixGate) := (t, X, F) -> (
-    assert (X.Cols == 1 and all(X.Elements, (x -> instance(x, InputHGate))));
-
-    dFdx := jacobian (X, F);
-    dFdt := diff(t, F);
-    solveHMatrixGate(dFdx, dFdt)
-    )
-
-predictorHMatrixGate = method()
--- based on the trapezoid predictor 
--- H denotes a holder variable to store values
--- note: H.Elements = {T0, X0}
--- T0.Elements = {t0, t1}
--- X0.Elements = {InputHGate, ..}
-predictorHMatrixGate (HMatrixGate,
-        InputHGate, HMatrixGate, HMatrixGate) := (H, t, X, F) -> (
-    X0 := last H.Elements;
-    n := length X0;
-    T0 := first H.Elements;
-
-    t0 := first T0.Elements;
-    t1 := last T0.Elements;
-    c1 := c(t, X, F);
-
-    -- substitute t, X with t_0, X_0
-    c2 := subGate (t, t0, c1);
-    (0..n-1) / (i -> c2 = subGate((X.Elements)#i, (X0.Elements)#i, c2));
-
-    tDelta := t1 - t0;
-    cfirst := c2;
-    h1 := scalarProductHMatrixGate(tDelta, cfirst);
-    -- Xtang named after X value from tangent predictor
-    Xtang := sumHMatrixGate(X0, h1); -- X_0 + c(X_0, t_0)*tDelta
-
-    -- substitute t, X with t_0 + tDelta = t_1, Xtang
-    c4 := subGate (t, t1, c1);
-    (0..n-1) / (i -> c4 = subGate((X.Elements)#i, elementHGate(Xtang, i), c4));
-    csecond := c4;
-
-    h2 := (inputHGate 0.5) * t1; -- t1/2
-    c5 := sumHMatrixGate(cfirst, csecond); -- c(X_0, t_0) + c(...)
-    h3 := scalarProductHMatrixGate(h2, c5); -- [c(X_0, t_0) + c(...)]*(t1/2)
-    sumHMatrixGate(X0, h3)
-    )
-
 HMap = new Type of HashTable
 net HMap := H -> (
     concatenateNets {"HMap(", H.InputGates, ") =", H.OutputGates}
@@ -501,6 +452,128 @@ specialize (HMap, InputValueTable) := (H, L) -> (
     flatten (H.OutputGates/(G -> specialize (G, L)))
 )
 
+-- method for getting x'(t) (see Section on Predictors in overleaf)
+-- t: InputHGate for time
+-- X: HMatrixGate column vector where Elements is a list of InputHGates
+c = method()
+c (InputHGate, HMatrixGate, HMatrixGate) := (t, X, F) -> (
+    assert (X.Cols == 1 and all(X.Elements, (x -> instance(x, InputHGate))));
+
+    dFdx := jacobian (X, F);
+    dFdt := diff(t, F);
+    solveHMatrixGate(dFdx, dFdt)
+    )
+
+predictorTangHMatrixGate = method()
+
+-- based on tangent predictor
+-- intakes an HMap, g, of the function and a List, I, of initial variable names
+-- form assumptions for g, I:
+-- (1) g.InputGates = {t, X}, g.OutputGates = {F}
+-- (2) I = {t0 : InputHGate, t1 : InputHGate, X0 : HMatrixGate}
+predictorTangHMatrixGate(HMap, List) := (g, I) -> (
+    -- unpack variable names
+    t0 := I#0;
+    t1 := I#1;
+    X0 := I#2;
+    t := g.InputGates#0;
+    X := g.InputGates#1;
+    F := g.OutputGates#0;
+
+    -- substitute values
+    n := length X0;
+    c1 := c(t, X, F);
+    c2 := subGate (t, t0, c1);
+    (0..n-1) / (i -> c2 = subGate((X.Elements)#i, (X0.Elements)#i, c2));
+
+    X0 + c2*(t1 - t0)
+)
+
+predictorTrapHMatrixGate = method()
+-- based on the trapezoid predictor 
+-- intakes an HMap, g, of the function and a List, I, of initial variable names
+-- form assumptions for g, I:
+-- (1) g.InputGates = {t, X}, g.OutputGates = {F}
+-- (2) I = {t0 : InputHGate, t1 : InputHGate, X0 : HMatrixGate}
+predictorTrapHMatrixGate (HMap, List) := (g, I) -> (
+    -- unpack variable names
+    t0 := I#0;
+    t1 := I#1;
+    X0 := I#2;
+    t := g.InputGates#0;
+    X := g.InputGates#1;
+    F := g.OutputGates#0;
+
+    -- substitute values
+    n := length X0;
+    c1 := c(t, X, F);
+    c2 := subGate (t, t0, c1);
+    (0..n-1) / (i -> c2 = subGate((X.Elements)#i, (X0.Elements)#i, c2));
+
+    tDelta := t1 - t0;
+    cfirst := c2;
+    h1 := scalarProductHMatrixGate(tDelta, cfirst);
+    -- Xtang named after X value from tangent predictor
+    Xtang := sumHMatrixGate(X0, h1); -- X_0 + c(X_0, t_0)*tDelta
+
+    -- substitute t, X with t_0 + tDelta = t_1, Xtang
+    c4 := subGate (t, t1, c1);
+    (0..n-1) / (i -> c4 = subGate((X.Elements)#i, elementHGate(Xtang, i), c4));
+    csecond := c4;
+
+    h2 := (inputHGate 0.5) * t1; -- t1/2
+    c5 := sumHMatrixGate(cfirst, csecond); -- c(X_0, t_0) + c(...)
+    h3 := scalarProductHMatrixGate(h2, c5); -- [c(X_0, t_0) + c(...)]*(t1/2)
+    sumHMatrixGate(X0, h3)
+    )                 
+
+predictorRK4HMatrixGate = method()
+-- based on Runge-Kutta 4
+-- intakes an HMap, g, of the function and a List, I, of initial variable names
+-- form assumptions for g, I:
+-- (1) g.InputGates = {t, X}, g.OutputGates = {F}
+-- (2) I = {t0 : InputHGate, t1 : InputHGate, X0 : HMatrixGate}
+predictorRK4HMatrixGate (HMap, List) := (g, I) -> (
+    -- unpack variable names
+    t0 := I#0;
+    t1 := I#1;
+    X0 := I#2;
+    t := g.InputGates#0;
+    X := g.InputGates#1;
+    F := g.OutputGates#0;
+
+    -- substitute values
+    n := length X0;
+    c1 := c(t, X, F);
+    d := t1 - t0;
+
+    -- compute R_1
+    c11 := subGate (t, t0, c1);
+    (0..n-1) / (i -> c11 = subGate((X.Elements)#i, (X0.Elements)#i, c11));
+    R1 := c11*d;
+
+    -- compute R_2
+    tmid := t0 + ((inputHGate 0.5)*d);
+    c21 := subGate (t, tmid, c1);
+    X0plusR1 := X0 + ((inputHGate 0.5)*R1);
+    (0..n-1) / (i -> c21 = subGate((X.Elements)#i, elementHGate(X0plusR1, i), c21));
+    R2 := c21*d;
+
+    -- compute R_3
+    c31 := subGate (t, tmid, c1);
+    X0plusR2 := X0 + ((inputHGate 0.5)*R2);
+    (0..n-1) / (i -> c31 = subGate((X.Elements)#i, elementHGate(X0plusR2, i), c31));
+    R3 := c31*d;
+
+    -- compute R_4
+    tmore := t0 + d;
+    c41 := subGate (t, tmore, c1);
+    X0plusR3 := X0 + R3;
+    (0..n-1) / (i -> c41 = subGate((X.Elements)#i, elementHGate(X0plusR3, i), c41));
+    R4 := c41*d;
+
+    X0 + ((inputHGate (1/6)) * (R1 + (twoHGate * R2) + (twoHGate * R3) + R4))
+)
 -- Newton's method
 newtonsOp = method()
 
@@ -515,6 +588,45 @@ newtonsOp(HMap) := g -> (
     J := jacobian(Y, P);
     hMap({Y}, {Y - solveHMatrixGate(J, P)})
 )
+
+newtonsMethod = method()
+
+-- takes an HMap and an initial point (list of values, eg {1.}, {1., 1.})
+-- Assumptions
+-- (1) expect g to be of the form {X} -> {F(X)}, F function
+-- (2) X HMatrixGate (with attribute Elements)
+-- (3) X0 has elements in R = RR_53
+newtonsMethod(HMap, List) := (g, X0) -> (
+    G := newtonsOp(g);
+
+    -- initialize values
+    R = RR_53;
+    X := g.InputGates#0;
+    Xlist := X.Elements;
+    n := #Xlist; 
+    L := inputValueTable (toList (0..n-1)/(i -> Xlist#i => X0#i));
+
+    -- check jacobian is safe
+    F := g.OutputGates#0;
+    dF := jacobian (X, F);
+    detdF := detHGate dF;
+    assert((specialize(detdF, L))#0 != 0);
+
+    -- run Newton's Method
+    X1 := specialize(G, L);
+    -- iterate over X_k until we find one satisfying
+    -- ||X_k - X_{k-1}||_2 < 0.1
+    track := 0; -- track iterations
+    while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= 0.01) do (
+        X0 = X1;
+        L = inputValueTable (toList (0..n-1)/(i -> Xlist#i => X0#i));
+        assert((specialize(detdF, L))#0 != 0);
+        X1 = specialize(G, L);
+        track = track + 1;
+    );
+    X1
+)
+
 
 -- H version of Straight-line Programs ---------------------------------------------
 -- substitute all instances of x with y 
