@@ -516,6 +516,45 @@ newtonsOp(HMap) := g -> (
     hMap({Y}, {Y - solveHMatrixGate(J, P)})
 )
 
+newtonsMethod = method()
+
+-- takes an HMap and an initial point (list of values, eg {1.}, {1., 1.})
+-- Assumptions
+-- (1) expect g to be of the form {X} -> {F(X)}, F function
+-- (2) X HMatrixGate (with attribute Elements)
+-- (3) X0 has elements in R = RR_53
+newtonsMethod(HMap, List) := (g, X0) -> (
+    G := newtonsOp(g);
+
+    -- initialize values
+    R = RR_53;
+    X := g.InputGates#0;
+    Xlist := X.Elements;
+    n := #Xlist; 
+    L := inputValueTable (toList (0..n-1)/(i -> Xlist#i => X0#i));
+
+    -- check jacobian is safe
+    F := g.OutputGates#0;
+    dF := jacobian (X, F);
+    detdF := detHGate dF;
+    assert((specialize(detdF, L))#0 != 0);
+
+    -- run Newton's Method
+    X1 := specialize(G, L);
+    -- iterate over X_k until we find one satisfying
+    -- ||X_k - X_{k-1}||_2 < 0.1
+    track := 0; -- track iterations
+    while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= 0.01) do (
+        X0 = X1;
+        L = inputValueTable (toList (0..n-1)/(i -> Xlist#i => X0#i));
+        assert((specialize(detdF, L))#0 != 0);
+        X1 = specialize(G, L);
+        track = track + 1;
+    );
+    X1
+)
+
+
 -- H version of Straight-line Programs ---------------------------------------------
 -- substitute all instances of x with y 
 -- G[x => y]

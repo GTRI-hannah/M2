@@ -60,11 +60,22 @@ F_1 = hMatrixGate({f_1, f_2, f_3}, 3, 1)
 Yt = hMatrixGate({oneHGate, twoHGate, threeHGate}, 3, 1) -- target value
 F_2 = F_1 - Yt -- F_1 - target value
 G_1 = hMap({X}, {F_2})
-G_2 = newtonsOp(G_1)
 
 -- 2. pick initial value
 R = RR_53
 X0 = {1_R, 1_R, 1_R}
+
+X1 = newtonsMethod(G_1, X0)
+
+<< "Result: " << X1 << ", found after " << track << " iterations" << endl;
+X0 = X1;
+L = inputValueTable {x => X0#0, y => X0#1, z => X0#2};
+Ys = specialize(F_1, L)
+<< "Evaluation of F_1: " << Ys << ", error: " << sqrt fold(plus, ({1, 2, 3} - Ys)/(i -> i*i)) << endl;
+
+
+-- old code for Problem 2
+G_2 = newtonsOp(G_1)
 L = inputValueTable {x => X0#0, y => X0#1, z => X0#2}
 -- confirm det jac F_2’(1) \neq 0
 dF_2 = jacobian (X, F_2)
