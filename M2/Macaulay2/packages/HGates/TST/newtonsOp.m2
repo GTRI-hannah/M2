@@ -163,4 +163,3 @@ L = inputValueTable {x => X0#0, y => X0#1};
 Ys = specialize(Ht0, L)
 << "Evaluation of Ht0: " << Ys << ", error: " << sqrt fold(plus, ({0.1, 0.1} - Ys)/(i -> i*i)) << endl;
 
--- Subsubsection: Conic Problems

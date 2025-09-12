@@ -1,4 +1,3 @@
--- check predicate
 restart
 needs "../HGates.m2"
 declareVariable \ {s_0, s_1, y_0, x, t}
@@ -19,7 +18,6 @@ g = hMap({t, X}, {H})
 I = {s_0, s_1, X0}
 p = predictorTrapHMatrixGate(g, I)
 p1 = predictorTangHMatrixGate(g, I)
-p2 = predictorRK4HMatrixGate(g, I)
 
 showStructure p
 
@@ -27,7 +25,7 @@ showStructure p
 L = inputValueTable {s_0 => 0_R, s_1 => 0.1_R, y_0 => 0_R}
 predicted = specialize(p, L) 
 specialize(p1, L)
-specialize(p2, L)
+predictorRK4(g, {0_R, 0.1_R, {0_R}})
 
 M = inputValueTable {t => 0_R, x => 0_R}
 cAbstract = c (t, X, H)

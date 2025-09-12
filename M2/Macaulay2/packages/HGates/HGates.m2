@@ -527,52 +527,70 @@ predictorTrapHMatrixGate (HMap, List) := (g, I) -> (
     sumHMatrixGate(X0, h3)
     )                 
 
-predictorRK4HMatrixGate = method()
+predictorRK4 = method()
 -- based on Runge-Kutta 4
--- intakes an HMap, g, of the function and a List, I, of initial variable names
+-- intakes an HMap, g, of the function and a List, I, of initial variable values
+-- and returns a list of the predicted value for X1
 -- form assumptions for g, I:
 -- (1) g.InputGates = {t, X}, g.OutputGates = {F}
--- (2) I = {t0 : InputHGate, t1 : InputHGate, X0 : HMatrixGate}
-predictorRK4HMatrixGate (HMap, List) := (g, I) -> (
-    -- unpack variable names
-    t0 := I#0;
-    t1 := I#1;
-    X0 := I#2;
+-- (2) I = {value, value, {value}}
+-- where each entry corresponds to {t0 : InputHGate, t1 : InputHGate, X0 : HMatrixGate}
+predictorRK4 (HMap, List) := (g, I) -> (
+    -- unpack inputs
+    t0 := I#0; -- value
+    t1 := I#1; -- value
+    X0 := I#2; -- list of values
     t := g.InputGates#0;
     X := g.InputGates#1;
+    Xlist := X.Elements;
     F := g.OutputGates#0;
 
     -- substitute values
-    n := length X0;
+    n := #X0;
     c1 := c(t, X, F);
     d := t1 - t0;
 
     -- compute R_1
-    c11 := subGate (t, t0, c1);
-    (0..n-1) / (i -> c11 = subGate((X.Elements)#i, (X0.Elements)#i, c11));
-    R1 := c11*d;
+    --<< "-- RK4 runtime --" << endl;
+    --time0 := cpuTime();
+    Llist := append(toList (0..n-1)/(i -> Xlist#i => X0#i), t => t0);
+    L := inputValueTable Llist;
+    c11 := specialize(c1, inputValueTable L);
+    R1 := c11/(e -> e*d);
+    --time1 := cpuTime();
+    --<< "time R1: " << time1-time0 << endl;
 
     -- compute R_2
-    tmid := t0 + ((inputHGate 0.5)*d);
-    c21 := subGate (t, tmid, c1);
-    X0plusR1 := X0 + ((inputHGate 0.5)*R1);
-    (0..n-1) / (i -> c21 = subGate((X.Elements)#i, elementHGate(X0plusR1, i), c21));
-    R2 := c21*d;
+    tmid := t0 + (0.5*d);
+    X0plusR1 := toList (0..n-1)/(i -> X0#i + (.5*R1#i));
+    Llist = append(toList (0..n-1)/(i -> Xlist#i => X0plusR1#i), t => tmid);
+    L = inputValueTable Llist;
+    c21 := specialize(c1, L);
+    R2 := c21/(e -> e*d);
+    --time2 := cpuTime();
+    --<< "time R2: " << time2-time1 << endl;
 
     -- compute R_3
-    c31 := subGate (t, tmid, c1);
-    X0plusR2 := X0 + ((inputHGate 0.5)*R2);
-    (0..n-1) / (i -> c31 = subGate((X.Elements)#i, elementHGate(X0plusR2, i), c31));
-    R3 := c31*d;
+    X0plusR2 := toList (0..n-1)/(i -> X0#i + (.5*R2#i));
+    Llist = append(toList (0..n-1)/(i -> Xlist#i => X0plusR2#i), t => tmid);
+    L = inputValueTable Llist;
+    c31 := specialize(c1, L);
+    R3 := c31/(e -> e*d);
+    --time3 := cpuTime();
+    --<< "time R3: " << time3-time2 << endl;
 
     -- compute R_4
     tmore := t0 + d;
-    c41 := subGate (t, tmore, c1);
-    X0plusR3 := X0 + R3;
-    (0..n-1) / (i -> c41 = subGate((X.Elements)#i, elementHGate(X0plusR3, i), c41));
-    R4 := c41*d;
+    X0plusR3 := toList (0..n-1)/(i -> X0#i + R3#i);
+    Llist = append(toList (0..n-1)/(i -> Xlist#i => X0plusR3#i), t => tmore);
+    L = inputValueTable Llist;
+    c41 := specialize(c1, L);
+    R4 := c41/(e -> e*d);
+    --time4 := cpuTime();
+    --<< "time R4: " << time4-time3 << endl;
 
-    X0 + ((inputHGate (1/6)) * (R1 + (twoHGate * R2) + (twoHGate * R3) + R4))
+    toList ((0..n-1)/(i -> X0#i + 
+        (1/6 * (R1#i + (2. * R2#i) + (2. * R3#i) + R4#i))))
 )
 -- Newton's method
 newtonsOp = method()
@@ -594,10 +612,11 @@ newtonsMethod = method()
 -- takes an HMap and an initial point (list of values, eg {1.}, {1., 1.})
 -- Assumptions
 -- (1) expect g to be of the form {X} -> {F(X)}, F function
--- (2) X HMatrixGate (with attribute Elements)
--- (3) X0 has elements in R = RR_53
+-- (2) X HMatrixGate (with attribute Elements = {InputHGate})
+-- (3) X0 has elements in R = RR_53 corresponding to variables in X 
 newtonsMethod(HMap, List) := (g, X0) -> (
     G := newtonsOp(g);
+    initialX0 := X0; -- track this for debugging
 
     -- initialize values
     R = RR_53;
@@ -615,14 +634,22 @@ newtonsMethod(HMap, List) := (g, X0) -> (
     -- run Newton's Method
     X1 := specialize(G, L);
     -- iterate over X_k until we find one satisfying
-    -- ||X_k - X_{k-1}||_2 < 0.1
+    -- ||X_k - X_{k-1}||_2 < threshold
     track := 0; -- track iterations
-    while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= 0.01) do (
+    threshold := 0.001;
+    while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= threshold) do (
         X0 = X1;
         L = inputValueTable (toList (0..n-1)/(i -> Xlist#i => X0#i));
         assert((specialize(detdF, L))#0 != 0);
         X1 = specialize(G, L);
         track = track + 1;
+        
+        if (track > 100) then (
+            << "Cut off Newton's Method after 100 iterations, threshold is "  << threshold << endl;
+            finaldiff := sqrt fold(plus, (X1 - initialX0)/(i -> i*i));
+            << "Difference between X_0 and X_100 (2-norm): " << finaldiff << endl;
+            break;
+        );
     );
     X1
 )
@@ -672,10 +699,57 @@ subGate (InputHGate, HGate, HGate) := (x, y, G) -> (
     ) else error "sub not defined for this type of HGate"
     )
 
+isGateConstant = method()
+
+-- returns true is all elements of a gate are constants
+isGateConstant(HGate) := G -> (
+    if instance(G, InputHGate) then (
+        isConstant(G)
+    )
+    else if instance(G, SumHGate) then (
+        H1 := isGateConstant(first G.Inputs);
+        H2 := isGateConstant(last G.Inputs);
+        H1 and H2
+    ) else if instance(G, ProductHGate) then (
+        H3 := isGateConstant(first G.Inputs);
+        H4 := isGateConstant(last G.Inputs);
+        H3 and H4
+    ) else if instance(G, DetHGate) then (
+        isGateConstant(G.Input);
+    ) else if instance(G, ElementHGate) then (
+        error "isGateConstant not implemented for ElementHGate"
+    ) else if instance(G, SumHMatrixGate) then (
+        H5 := isGateConstant(first G.Inputs);
+        H6 := isGateConstant(last G.Inputs);
+        H5 and H6
+    ) else if instance(G, ProductHMatrixGate) then (
+        H9 := isGateConstant(first G.Inputs);
+        H10 := isGateConstant(last G.Inputs);
+        H9 and H10
+    ) else if instance(G, SolveHMatrixGate) then (
+        H11 := isGateConstant(first G.Inputs);
+        H12 := isGateConstant(last G.Inputs);
+        H11 and H12
+    ) else if instance(G, ScalarProductHMatrixGate) then (
+        H13 := isGateConstant(first G.Inputs);
+        H14 := isGateConstant(last G.Inputs);
+        H13 and H14
+    ) else if instance(G, HMatrixGate) then ( -- note, HMatrixGate must be at the bottom
+        Lbools := G.Elements / (H -> isGateConstant(H));
+        fold((a, b) -> a and ab, Lbools)
+    ) else error "isGateConstant not defined for this type of HGate"
+)
+
 -- H[x => y]
 subMap = method()
+
+-- !! only filters out constants for all types variables EXCEPT ElementHMatrixGate
+-- eg. subMap(t, 1, hMap({t, x}, {t+x})) = hMap({x}, {1+x})
+-- eg:  subMap(x, 1, hMap({t, X = HMatrixGate({x, x}, 2, 1)}, {t*X})) = hMap({t}, {t*HMatrixGate({1, 1}, 2, 1)})
 subMap (InputHGate, InputHGate, HMap) := (x, y, H) -> (
-    hMap (H.InputGates / (g -> subGate(x, y, g)), H.OutputGates / (g -> subGate(x, y, g)))
+    I := select(H.InputGates / 
+        (g -> subGate(x, y, g)), g -> not isGateConstant(g)); -- inputs, filter out those with all constants 
+    hMap (I, H.OutputGates / (g -> subGate(x, y, g)))
 )
 
 -- printing functions for SLP
