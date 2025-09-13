@@ -654,6 +654,49 @@ newtonsMethod(HMap, List) := (g, X0) -> (
     X1
 )
 
+predictorCorrector = method()
+
+-- intakes HMap of F, HMap of G, List of solution to G
+-- returns List approximating solution to F via predictor-corrector
+-- method, using RK4 and Newton's Method 
+-- assume we have a square system (ie #X = length F = length G)
+-- assume variable t is defined
+-- Fmap is an HMap of the target set of equations (form: hMap({X}, {F}))
+-- Gmap is an HMap of a known set of equations (form: hMap({X}, {G}))
+-- Gsol is a List of solutions to G
+predictorCorrector(HMap, HMap, List) := (Fmap, Gmap, Gsol) -> (
+  G := Gmap.OutputGates#0;
+  F := Fmap.OutputGates#0;
+  X := Fmap.InputGates#0;
+
+  -- 1. Define homotopy HMap
+  H = ((oneHGate - t)*G) + ((inputHGate 0.5)*t*F); -- \gamma arbitrarily selected
+  M = hMap({t, X}, {H});
+
+  -- 2. traverse homotopy from t = 0 to t = 1
+  X0literal = Gsol;
+  t0literal = 0.;
+  d = 0.1; -- time step
+  while (t0literal < 1. - d) do (
+    t1literal = t0literal + d;
+    predlist = toList (t0literal, t1literal, X0literal);
+
+    --<< "Iteration: " << t1literal << endl;
+    -- 1. predict
+    X1literal = predictorRK4(M, predlist);
+    --<< "Predicted: " << X1literal << endl;
+    
+    -- 2. correct
+    Msinglevar = subMap(t, inputHGate t1literal, M);
+    X1literal = newtonsMethod(Msinglevar, X1literal);
+    --<< "Corrected: " << X1literal << endl;
+
+    -- 3. update values for next iteration
+    t0literal = t1literal;
+    X0literal = X1literal;
+  );
+  X1literal
+)
 
 -- H version of Straight-line Programs ---------------------------------------------
 -- substitute all instances of x with y 

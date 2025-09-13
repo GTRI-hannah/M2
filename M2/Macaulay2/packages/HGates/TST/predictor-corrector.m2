@@ -6,42 +6,22 @@ needs "../HGates.m2"
 R = RR_53
 declareVariable \ {x, y, t}
 
--- 1. set up problem, define Newton's Operator
+-- 1. Define HMap of F
 f_1 = x*x - (fiveHGate*x) + sixHGate -- roots: 2, 3
 f_2 = y*y*y - (threeHGate*y*y) - (fourHGate*y) + twelveHGate -- roots: 2, -2, 3
-g_1 = x*x - oneHGate
-g_2 = y*y*y - oneHGate
 
 X = hMatrixGate({x,y}, 2, 1)
 n = length X
 Xlist = X.Elements;
 F = hMatrixGate({f_1, f_2}, 2, 1)
+MF = hMap({X}, {F})
+g_1 = x*x - oneHGate
+g_2 = y*y*y - oneHGate
 G = hMatrixGate({g_1, g_2}, 2, 1)
-H = ((oneHGate - t)*G) + ((inputHGate 0.528)*t*F) -- \gamma based on Frobenius norm
-M = hMap({t, X}, {H})
+MG = hMap({X}, {G})
+Gsol = {1., 1.}
 
--- 3. traverse homotopy from t = 0 to t = 1
-X0literal = {1., 1.}
-t0literal = 0.
-d = 0.1 -- time step
-time while (t0literal < 1.) do (
-  t1literal = t0literal + d;
-  predlist = toList (t0literal, t1literal, X0literal);
-
-  << "Iteration: " << t1literal << endl;
-  -- 1. predict
-  X1literal = predictorRK4(M, predlist);
-  << "Predicted: " << X1literal << endl;
-  
-  -- 2. correct
-  Msinglevar = subMap(t, inputHGate t1literal, M);
-  X1literal = newtonsMethod(Msinglevar, X1literal);
-  << "Corrected: " << X1literal << endl;
-
-  -- 3. update values for next iteration
-  t0literal = t0literal + d;
-  X0literal = X1literal;
-)
+X1literal = predictorCorrector(MF, MG, Gsol)
 
 << "Solutions found X': " << X1literal << endl;
 evalF = toList (specialize(F, inputValueTable {x => X1literal#0, y => X1literal#1}))
