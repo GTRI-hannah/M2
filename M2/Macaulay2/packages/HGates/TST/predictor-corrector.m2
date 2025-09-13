@@ -20,8 +20,9 @@ g_2 = y*y*y - oneHGate
 G = hMatrixGate({g_1, g_2}, 2, 1)
 MG = hMap({X}, {G})
 Gsol = {1., 1.}
+d = 0.1
 
-X1literal = predictorCorrector(MF, MG, Gsol)
+X1literal = predictorCorrector(MF, MG, Gsol d)
 
 << "Solutions found X': " << X1literal << endl;
 evalF = toList (specialize(F, inputValueTable {x => X1literal#0, y => X1literal#1}))
