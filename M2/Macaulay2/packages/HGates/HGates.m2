@@ -656,7 +656,7 @@ newtonsMethod(HMap, List) := (g, X0) -> (
 
 predictorCorrector = method()
 
--- intakes HMap of F, HMap of G, List of solution to G, timestep d
+-- intakes HMap of F, HMap of G, List of solution to G, time step d
 -- returns List approximating solution to F via predictor-corrector
 -- method, using RK4 and Newton's Method 
 -- assume we have a square system (ie #X = length F = length G)
