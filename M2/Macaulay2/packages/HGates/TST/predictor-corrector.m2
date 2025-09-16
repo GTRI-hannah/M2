@@ -181,6 +181,35 @@ specialize(f5, L)
 knownconic = (x + fourHGate)*(x + fourHGate)*(inputHGate (1/25)) + y*y*(inputHGate (1/9)) - oneHGate
 specialize(knownconic, L) -- expect close to zero
 
+-- 7. check a focus of the resulting conic is the origin
+-- (get standard form foci, work backwards to confirm is origin or not)
+Q = matrix{{X1literal#0, X1literal#1 * 0.5}, {X1literal#1 * 0.5, X1literal#2}}
+(e, P) = eigenvectors(Q, Hermitian => true)
+P = -1*P*matrix{{0, 1}, {1, 0}}
+DEprime = (transpose P)*(matrix{{X1literal#3}, {X1literal#4}})
+Dprime = ((entries DEprime)#0)#0 -- D'
+Eprime = ((entries DEprime)#1)#0 -- E'
+eval1 = -e#1 -- first eigenvalue
+eval2 = -e#0 -- second eigenvalue
+K = (Dprime^2)/(4*eval1) + (Eprime^2)/(4*eval2) + 1
+Delta = (X1literal#1)^2 - 4*(X1literal#0)*(X1literal#2) -- B^2 - 4AC
+(h, k) = (Dprime/(2*eval1), Eprime/(2*eval2)) -- center
+
+if (Delta < 0) then ( -- conic is an ellipse
+  if (eval1 < 0) then (
+    << "Oh no our ellipse is imaginery" << endl;
+  ) else (
+    a = max(sqrt(K/eval1), sqrt(K/eval2));
+    b = min(sqrt(K/eval1), sqrt(K/eval2));
+    c = sqrt(a^2 - b^2);
+    << "Columns of matrix are Foci of Ellipse: " << endl;
+    (F1, F2) = (P*matrix{{c+h}, {k}}, P*matrix{{-c+h}, {k}}) -- literal foci
+  )
+) else (
+  << "This should have been an ellipse" << endl;
+)
+
+
 -- Conic Problem 3
 -- Given 4 points in R^2, return a fifth point such that the
 -- conic passing through all points has a focus at the origin
@@ -239,6 +268,7 @@ d = 0.01
 
 -- 4. Use homtopy continutation to get a solution
 X1literal = predictorCorrector(MF, MG, Gsol, d)
+X1literal
 
 -- 5. Verify conic contains all five points
 Xvars = X.Elements;
@@ -251,7 +281,8 @@ specialize(f3, L)
 specialize(f4, L)
 specialize(f5, L)
 
--- 6. In this case, we know the target system is an ellipse
+-- 6. In this case, we know the target system is a parabola
 -- So we check that (x, y) is in that equation
-knownconic = fourHGate*x + fourHGate - y*y
+knownconic = x + oneHGate - (inputHGate 0.25)*y*y
 specialize(knownconic, L) -- expect close to zero
+
