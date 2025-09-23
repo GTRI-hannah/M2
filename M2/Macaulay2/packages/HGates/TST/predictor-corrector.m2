@@ -43,8 +43,7 @@ evalF = toList (specialize(F, inputValueTable {x => X1literal#0, y => X1literal#
 -- with 2 complete points and 3 points based on two indeterminants
 -- return the conic passing through all points has a focus at the origin
 -- and the values for the indeterminants
--- TARGET IS KNOWN TO BE A CIRCLE CENTERED AT ORIGIN W/ RADIUS 2, 
--- UNKNOWN (x,y) values
+
 restart
 needs "../HGates.m2"
 R = RR_53
