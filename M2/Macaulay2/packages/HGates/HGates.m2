@@ -167,9 +167,27 @@ elementHGate = method()
 -- assumes single index to index an element
 elementHGate (HMatrixGate, ZZ) := (G, i) -> (
     if i < 0 then error "index < 0";
-    new ElementHGate from {
-        Inputs => (G, i)
+    if instance(G, SumHMatrixGate) then ( -- will implement efficiently if used
+        new ElementHGate from {
+            Inputs => (G, i)
         }
+    ) else if instance(G, ProductHMatrixGate) then ( -- will implement efficiently if used
+        new ElementHGate from {
+            Inputs => (G, i)
+        }
+    ) else if instance(G, ScalarProductHMatrixGate) then ( -- will implement efficiently if used
+        new ElementHGate from {
+            Inputs => (G, i)
+        }
+    ) else if instance(G, SolveHMatrixGate) then (
+        new ElementHGate from {
+            Inputs => (G, i)
+        }
+    ) else (
+        new ElementHGate from {
+            Inputs => ((G.Elements)#i, 0)
+        }
+    )
     )
 
 -- the following are HMatrixGates ------------------------------------------
@@ -460,7 +478,7 @@ c (InputHGate, HMatrixGate, HMatrixGate) := (t, X, F) -> (
     assert (X.Cols == 1 and all(X.Elements, (x -> instance(x, InputHGate))));
 
     dFdx := jacobian (X, F);
-    dFdt := diff(t, F);
+    dFdt := diff(t, F); 
     solveHMatrixGate(dFdx, dFdt)
     )
 
@@ -526,6 +544,51 @@ predictorTrapHMatrixGate (HMap, List) := (g, I) -> (
     h3 := scalarProductHMatrixGate(h2, c5); -- [c(X_0, t_0) + c(...)]*(t1/2)
     sumHMatrixGate(X0, h3)
     )                 
+
+predictorRK4HMatrixGate = method()
+
+-- returns an HMatrixGate
+predictorRK4HMatrixGate (HMap, List) := (g, I) -> (
+    -- unpack variable names
+    t0 := I#0;
+    t1 := I#1;
+    X0 := I#2;
+    t := g.InputGates#0;
+    X := g.InputGates#1;
+    F := g.OutputGates#0;
+
+    -- substitute values
+    n := length X0;
+    c1 := c(t, X, F);
+    d := t1 - t0;
+
+    -- compute R_1
+    c11 := subGate (t, t0, c1);
+    (0..n-1) / (i -> c11 = subGate((X.Elements)#i, (X0.Elements)#i, c11));
+    R1 := c11*d;
+
+    -- compute R_2
+    tmid := t0 + ((inputHGate 0.5)*d);
+    c21 := subGate (t, tmid, c1);
+    X0plusR1 := X0 + ((inputHGate 0.5)*R1);
+    (0..n-1) / (i -> c21 = subGate((X.Elements)#i, elementHGate(X0plusR1, i), c21));
+    R2 := c21*d;
+
+    -- compute R_3
+    c31 := subGate (t, tmid, c1);
+    X0plusR2 := X0 + ((inputHGate 0.5)*R2);
+    (0..n-1) / (i -> c31 = subGate((X.Elements)#i, elementHGate(X0plusR2, i), c31));
+    R3 := c31*d;
+
+    -- compute R_4
+    tmore := t0 + d;
+    c41 := subGate (t, tmore, c1);
+    X0plusR3 := X0 + R3;
+    (0..n-1) / (i -> c41 = subGate((X.Elements)#i, elementHGate(X0plusR3, i), c41));
+    R4 := c41*d;
+
+    X0 + ((inputHGate (1/6)) * (R1 + (twoHGate * R2) + (twoHGate * R3) + R4))
+)
 
 predictorRK4 = method()
 -- based on Runge-Kutta 4
@@ -629,6 +692,7 @@ newtonsMethod(HMap, List) := (g, X0) -> (
     F := g.OutputGates#0;
     dF := jacobian (X, F);
     detdF := detHGate dF;
+    << "Newton's Method: " << (specialize(detdF, L))#0 << endl;
     assert((specialize(detdF, L))#0 != 0);
 
     -- run Newton's Method
@@ -640,6 +704,7 @@ newtonsMethod(HMap, List) := (g, X0) -> (
     while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= threshold) do (
         X0 = X1;
         L = inputValueTable (toList (0..n-1)/(i -> Xlist#i => X0#i));
+        << "Newton's Method: " << (specialize(detdF, L))#0 << endl;
         assert((specialize(detdF, L))#0 != 0);
         X1 = specialize(G, L);
         track = track + 1;

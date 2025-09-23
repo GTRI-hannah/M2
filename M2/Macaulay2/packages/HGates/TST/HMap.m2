@@ -64,6 +64,21 @@ endX0 = subGate(y_0, elementHGate(startX0, 0), newtonsOp(g))
 L = inputValueTable {s_0 => 0_R, s_1 => 0.1_R, y_1 => -.25_R}
 specialize (endX0, L) -- actual solution is 0, this is 0.411
 
+restart
+needs "../HGates.m2"
+declareVariable \ {x_0, x}
+f = x*x - (inputHGate 2)
+X = hMatrixGate({x}, 1, 1)
+F = hMatrixGate({f}, 1, 1)
+mapOff = hMap({X}, {F})
+
+g = newtonsOp(mapOff)
+
+R = RR_53
+L = inputValueTable {x => 1.1_R}
+specialize (g, L)
+
+
 -- UNIVARIATE CASE
 restart
 needs "../HGates.m2"
