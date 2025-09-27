@@ -165,6 +165,7 @@ diff (InputHGate, ElementHGate) := (x,g) -> (
     )
 elementHGate = method()
 -- assumes single index to index an element
+-- returns literal element if it can unpack it
 elementHGate (HMatrixGate, ZZ) := (G, i) -> (
     if i < 0 then error "index < 0";
     if instance(G, SumHMatrixGate) then ( -- will implement efficiently if used
@@ -183,10 +184,8 @@ elementHGate (HMatrixGate, ZZ) := (G, i) -> (
         new ElementHGate from {
             Inputs => (G, i)
         }
-    ) else (
-        new ElementHGate from {
-            Inputs => ((G.Elements)#i, 0)
-        }
+    ) else ( -- assume class HMatrixGate
+        (G.Elements)#i
     )
     )
 
@@ -244,7 +243,6 @@ jacobian (HMatrixGate, HMatrixGate) := (X, G) -> (
     m := X.Rows;
     -- make column by column n x m matrix
     E := X.Elements / (x -> diff(x, G));
-
     flatListForMatrix := flatten (toList (0..(m-1)) / (i -> (
         toList(0..(n-1)) / (j -> elementHGate(E#j, i) 
         ))
@@ -412,6 +410,7 @@ specialize (SolveHMatrixGate, InputValueTable) := (S, L) -> (
         toList (0..(n-1)) / (j -> evalG#(i*n + j))
     )); -- convert to a list of lists
     matrixA := matrix listMatrixA; 
+    << "[specialize solvegate] G" << evalG << ", " << matrixA << endl;
     inverseMatrixA := inverse matrixA;
     listMatrixB := toList (0..(n-1)) / (i ->
         {evalH#i}
@@ -700,7 +699,7 @@ newtonsMethod(HMap, List) := (g, X0) -> (
     -- iterate over X_k until we find one satisfying
     -- ||X_k - X_{k-1}||_2 < threshold
     track := 0; -- track iterations
-    threshold := 0.001;
+    threshold := 0.01;
     while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= threshold) do (
         X0 = X1;
         L = inputValueTable (toList (0..n-1)/(i -> Xlist#i => X0#i));
@@ -709,11 +708,13 @@ newtonsMethod(HMap, List) := (g, X0) -> (
         X1 = specialize(G, L);
         track = track + 1;
         
-        if (track > 100) then (
+        if (track > 30) then (
             << "Cut off Newton's Method after 100 iterations, threshold is "  << threshold << endl;
             finaldiff := sqrt fold(plus, (X1 - initialX0)/(i -> i*i));
             << "Difference between X_0 and X_100 (2-norm): " << finaldiff << endl;
-            break;
+            if (track > 100) then (
+                break;
+            );
         );
     );
     X1
