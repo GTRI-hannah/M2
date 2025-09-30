@@ -410,7 +410,7 @@ specialize (SolveHMatrixGate, InputValueTable) := (S, L) -> (
         toList (0..(n-1)) / (j -> evalG#(i*n + j))
     )); -- convert to a list of lists
     matrixA := matrix listMatrixA; 
-    << "[specialize solvegate] G" << evalG << ", " << matrixA << endl;
+    -- << "[specialize solvegate] G" << evalG << ", " << matrixA << endl;
     inverseMatrixA := inverse matrixA;
     listMatrixB := toList (0..(n-1)) / (i ->
         {evalH#i}
