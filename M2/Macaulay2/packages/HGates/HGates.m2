@@ -546,6 +546,8 @@ predictorTrapHMatrixGate (HMap, List) := (g, I) -> (
 
 predictorRK4HMatrixGate = method()
 
+-- HMap of function
+-- List of t0, t1, X0 as HGates
 -- returns an HMatrixGate
 predictorRK4HMatrixGate (HMap, List) := (g, I) -> (
     -- unpack variable names
@@ -889,6 +891,8 @@ printSLP (List, List) := (I, O) -> (
     p := newPrintIndices " = ";
     O / (g -> printHGate(g, p));
     unsortedLines := values p#"gates" / (l -> l#0 | p#"assignmentSymbol" | l#1 );
+    << "[printSLP]: print sorted lines" << endl;
+    
     sort unsortedLines / (slpLine -> << slpLine << endl);
     O / (g -> << "OUTPUT: " << ((p#"gates")#g)#0 << p#"assignmentSymbol" << ((p#"gates")#g)#1  << endl);
     )
@@ -899,13 +903,12 @@ printHGate (InputHGate, PrintIndices) := (g,p) -> if (p#"gates")#?g then (p#"gat
 	    (p#"gates")#g = {"C"|toString p#"#consts", net g};
     	p#"#consts" = p#"#consts" + 1;
 	) else (
-	    (p#"gates")#g = {"I"|toString p#"#vars", net g};
+	    --(p#"gates")#g = {"I"|toString p#"#vars", net g}; -- shows variable name in SLP
+        (p#"gates")#g = {"I"|toString p#"#vars", "x["|toString p#"#vars"|"]"}; -- packs variables in list x in SLP
     	p#"#vars" = p#"#vars" + 1;
 	);
     (p#"gates")#g
     )
-
-
 
 printHGate (SumHGate, PrintIndices) := (g,p) -> (
     if (p#"gates")#?g then (p#"gates")#g else (
@@ -931,7 +934,7 @@ printHGate (ProductHGate, PrintIndices) := (g,p) -> (
 
 printHGate (DetHGate, PrintIndices) := (g,p) -> (
     if (p#"gates")#?g then (p#"gates")#g else (
-    m := g.Inputs;
+    m := g.Input;
     val := "det(" | (printHGate(m,p))#0 | ")";
     idx := "R"|toString p#"#lines";
     (p#"gates")#g = {idx, val};
@@ -993,7 +996,7 @@ printHGate (ElementHGate, PrintIndices) := (g,p) -> (
     M := g.Inputs#0;
     i := g.Inputs#1;
 
-    c := inputHMatrixGate i;
+    c := inputHGate i;
 
     if not (p#"gates")#?c then (
         (p#"gates")#c = {"C"|toString p#"#consts", net c};
