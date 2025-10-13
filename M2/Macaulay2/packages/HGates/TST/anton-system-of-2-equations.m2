@@ -26,6 +26,20 @@ end
 
 restart
 load "anton-system-of-2-equations.m2"
+-- evaluate Jacobian
+M = hMatrixGate(focusAtOrigin,2,1)
+J = jacobian(hMatrixGate({x,y},2,1),M);
+
+M0 = specialize(M, inputValueTable{x=>0.,y=>0.})
+M1 = specialize(M, inputValueTable{x=>0.0001,y=>0.0001})
+J0 = matrix pack(2,specialize(J, inputValueTable{x=>0.,y=>0.}))
+J1 = matrix pack(2,specialize(J, inputValueTable{x=>0.01,y=>0.01}))
+
+-- evaluate F
+F0 = specialize(F, inputValueTable{x=>0.,y=>0.})
+F1 = specialize(F, inputValueTable{x=>0.01,y=>0.01})
+
+
 -- try Newton
 newtonsMethod(F, {0.01,0.001})
 
