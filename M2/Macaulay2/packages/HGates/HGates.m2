@@ -410,8 +410,12 @@ specialize (SolveHMatrixGate, InputValueTable) := (S, L) -> (
         toList (0..(n-1)) / (j -> evalG#(i*n + j))
     )); -- convert to a list of lists
     matrixA := matrix listMatrixA; 
+    --<< "[specialize solve]: matrix A: " << matrixA << ", target: " << target matrixA << ", det: " << det matrixA << endl;
+    --assert (abs (det matrixA) > 0.0001);
     -- << "[specialize solvegate] G" << evalG << ", " << matrixA << endl;
     inverseMatrixA := inverse matrixA;
+    --<< "[specialize solve]: inverse A " << inverseMatrixA << endl;
+
     listMatrixB := toList (0..(n-1)) / (i ->
         {evalH#i}
     ); -- convert to a list of lists
@@ -693,27 +697,27 @@ newtonsMethod(HMap, List) := (g, X0) -> (
     F := g.OutputGates#0;
     dF := jacobian (X, F);
     detdF := detHGate dF;
-    << "Newton's Method: " << (specialize(detdF, L))#0 << endl;
+    --<< "Newton's Method (determinant Jacobian): " << (specialize(detdF, L))#0 << endl;
     assert((specialize(detdF, L))#0 != 0);
 
     -- run Newton's Method
     X1 := specialize(G, L);
     -- iterate over X_k until we find one satisfying
-    -- ||X_k - X_{k-1}||_2 < threshold
+    -- ||X_k - X_{k-1}||_2 < threshold 
     track := 0; -- track iterations
     threshold := 0.01;
-    while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= threshold) do (
+    cutoff := 1e-10; -- if we get this close to 0, stop
+    while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= threshold) and (max (specialize(F, L)) > cutoff) do (
         X0 = X1;
         L = inputValueTable (toList (0..n-1)/(i -> Xlist#i => X0#i));
-        << "Newton's Method: " << (specialize(detdF, L))#0 << endl;
+        --<< "Newton's Method (determinant Jacobian): " << (specialize(detdF, L))#0 << ", X0: " << X0 << endl;
         assert((specialize(detdF, L))#0 != 0);
         X1 = specialize(G, L);
         track = track + 1;
         
         if (track > 30) then (
-            << "Cut off Newton's Method after 100 iterations, threshold is "  << threshold << endl;
-            finaldiff := sqrt fold(plus, (X1 - initialX0)/(i -> i*i));
-            << "Difference between X_0 and X_100 (2-norm): " << finaldiff << endl;
+            --<< "Current iteration: " << track << ", threshold is "  << threshold << endl;
+            --<< "Difference between X_k, X_k-1 (2-norm): " << sqrt fold(plus, (X1 - X0)/(i -> i*i)) << endl;
             if (track > 100) then (
                 break;
             );
@@ -722,7 +726,7 @@ newtonsMethod(HMap, List) := (g, X0) -> (
     X1
 )
 
-predictorCorrector = method()
+predictorCorrector = method(Options => {fileName => "dummy.txt"})
 
 -- intakes HMap of F, HMap of G, List of solution to G, time step d
 -- returns List approximating solution to F via predictor-corrector
@@ -732,13 +736,15 @@ predictorCorrector = method()
 -- Fmap is an HMap of the target set of equations (form: hMap({X}, {F}))
 -- Gmap is an HMap of a known set of equations (form: hMap({X}, {G}))
 -- Gsol is a List of solutions to G
-predictorCorrector(HMap, HMap, List, RR) := (Fmap, Gmap, Gsol, d) -> (
+predictorCorrector(HMap, HMap, List, RR) := o -> (Fmap, Gmap, Gsol, d) -> (
   G := Gmap.OutputGates#0;
   F := Fmap.OutputGates#0;
   X := Fmap.InputGates#0;
 
   -- 1. define homotopy HMap
-  H = ((oneHGate - t)*G) + ((inputHGate 0.5)*t*F); -- \gamma arbitrarily selected
+  gamma := inputHGate (random (0.8, 1.8)); -- random complex number
+  o.fileName << "gamma: " << gamma << endl;
+  H = ((oneHGate - t)*G) + (gamma*t*F); -- \gamma arbitrarily selected
   M = hMap({t, X}, {H});
 
   -- 2. traverse homotopy from t = 0 to t = 1
@@ -748,15 +754,15 @@ predictorCorrector(HMap, HMap, List, RR) := (Fmap, Gmap, Gsol, d) -> (
     t1literal = t0literal + d;
     predlist = toList (t0literal, t1literal, X0literal);
 
-    << "Iteration: " << t1literal << endl;
+    --<< "Iteration: " << t1literal << endl;
     -- 1. predict
     X1literal = predictorRK4(M, predlist);
-    << "Predicted: " << X1literal << endl;
+    --<< "Predicted: " << X1literal << endl;
     
     -- 2. correct
     Msinglevar = subMap(t, inputHGate t1literal, M);
     X1literal = newtonsMethod(Msinglevar, X1literal);
-    << "Corrected: " << X1literal << endl;
+    --<< "Corrected: " << X1literal << endl;
 
     -- 3. update values for next iteration
     t0literal = t1literal;
