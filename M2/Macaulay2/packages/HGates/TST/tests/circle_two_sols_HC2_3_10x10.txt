@@ -1,0 +1,7 @@
+Circle Two Solutions via Homotopy Continuation (2x2)
+Target: {-.25, 0, -.25, 0, 0} with 4 points (+/-1.414, +/1.414)
+Trial 3
+gamma: 1.74089
+time: 972.185, value: {1.51317, -1.78456}
+2-norm coeffs: 4.01134
+----------------------------------------

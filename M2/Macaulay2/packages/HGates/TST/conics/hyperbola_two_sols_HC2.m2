@@ -33,8 +33,8 @@ MF = hMap({X},{F})
 
 
 -- starting system
-g1 = x*x*x*x*x*x*x*x - oneHGate
-g2 = y*y*y*y - oneHGate
+g1 = (x*x*x*x)*(x*x*x*x)*(x*x*x*x) - oneHGate
+g2 = (y*y*y*y)*(y*y*y*y)*(y*y*y*y) - oneHGate
 
 G = hMatrixGate({g1, g2}, 2, 1)
 MG = hMap({X}, {G})

@@ -1,0 +1,328 @@
+Parabola Two Solutions via Newton's Method
+Target: {-.125, .25, -.125, -.7071, -.7071} with points (-2.82843, 1) or (1.41421, 0.5)
+Trial 1
+Starting at: (.5652, 1.06839)
+time: 1.15504, value: {1.2002, 1.05613}
+Trial 2
+Starting at: (-1.74408, .813865)
+time: 10.0792, value: {-4.5782, 1.7553}
+Trial 3
+Starting at: (-.66035, 1.00541)
+time: 28.7729, value: {.620511, .932663}
+Trial 4
+Starting at: (.934517, .709759)
+time: 2.21732, value: {39.128, 3.70176}
+!!!!!!!! Found close enough solution: {39.128, 3.70176}
+Trial 5
+Starting at: (-1.453, 1.01452)
+time: 1.11184, value: {-2.32865, 1.03208}
+Trial 6
+Starting at: (-1.27033, .690351)
+time: 28.7475, value: {46.3306, .893077}
+Trial 7
+Starting at: (-2.41586, .583056)
+time: 13.265, value: {13.6734, .978264}
+Trial 8
+Starting at: (-.494392, .575693)
+time: 3.3321, value: {79.6019, .711233}
+!!!!!!!! Found close enough solution: {79.6019, .711233}
+Trial 9
+Starting at: (.831262, .697035)
+time: 2.21213, value: {16.242, 1.41834}
+!!!!!!!! Found close enough solution: {16.242, 1.41834}
+Trial 10
+Starting at: (1.27572, .471016)
+time: 28.6836, value: {19.4839, .907462}
+Trial 11
+Starting at: (-1.78705, .472677)
+time: 1.10961, value: {32935.8, .389692}
+Trial 12
+Starting at: (-2.29964, 1.02435)
+time: 6.61762, value: {-2.82289, .999672}
+!!!!!!!! Found close enough solution: {-2.82289, .999672}
+Trial 13
+Starting at: (-1.80815, .995364)
+time: 1.11215, value: {-1.21122, .992857}
+Trial 14
+Starting at: (.241591, .745616)
+time: 2.2087, value: {3.64245, .806988}
+Trial 15
+Starting at: (1.30363, .637985)
+time: 28.721, value: {19.0155, -2.03379}
+Trial 16
+Starting at: (-2.75761, .489118)
+time: 3.31787, value: {7.97186, 1.31315}
+!!!!!!!! Found close enough solution: {7.97186, 1.31315}
+Trial 17
+Starting at: (-1.99468, .837883)
+time: 1.11248, value: {-1.77477, .834386}
+Trial 18
+Starting at: (-.963074, .402106)
+time: 28.7338, value: {-464.844, .295315}
+Trial 19
+Starting at: (-1.34292, .732746)
+time: 2.22011, value: {19.1649, .878003}
+Trial 20
+Starting at: (1.4291, .68359)
+time: 4.41721, value: {6.33047, 1.54721}
+!!!!!!!! Found close enough solution: {6.33047, 1.54721}
+Trial 21
+Starting at: (-.906039, .649362)
+time: 28.8111, value: {59.7007, .889423}
+Trial 22
+Starting at: (-1.32337, .637149)
+time: 3.3335, value: {89.8324, .693608}
+!!!!!!!! Found close enough solution: {89.8324, .693608}
+Trial 23
+Starting at: (-1.7209, 1.09879)
+time: 1.11364, value: {-4.99318, 1.11462}
+Trial 24
+Starting at: (-1.27442, .74611)
+time: 2.22012, value: {13.888, .969442}
+Trial 25
+Starting at: (1.36688, .949479)
+time: 16.5379, value: {.655002, .928376}
+Trial 26
+Starting at: (-.38352, 1.04196)
+time: 3.29479, value: {-.420848, 1.0508}
+Trial 27
+Starting at: (-1.02086, .873231)
+time: 9.9058, value: {.208486, .927869}
+Trial 28
+Starting at: (-2.30969, .906679)
+time: 2.21374, value: {-1.98504, .893632}
+Trial 29
+Starting at: (-1.96732, 1.01707)
+time: 2.21379, value: {-10.5816, 1.09494}
+!!!!!!!! Found close enough solution: {-10.5816, 1.09494}
+Trial 30
+Starting at: (-2.74714, .824542)
+time: 5.51194, value: {3.44185, .773386}
+Trial 31
+Starting at: (-1.77201, 1.07595)
+time: 1.11755, value: {1.96724, 1.06811}
+!!!!!!!! Found close enough solution: {1.96724, 1.06811}
+Trial 32
+Starting at: (-2.06872, .749312)
+time: 1.12387, value: {-5.193, .747961}
+Trial 33
+Starting at: (.379152, .895751)
+time: 14.4425, value: {1.02176, .925118}
+Trial 34
+Starting at: (-2.79421, 1.03822)
+time: 15.563, value: {-19.9025, .926296}
+Trial 35
+Starting at: (1.01204, .814862)
+time: 4.45281, value: {3.87159, .741578}
+Trial 36
+Starting at: (-1.46899, .471394)
+time: 28.961, value: {-130.472, .193604}
+Trial 37
+Starting at: (-.0455612, .818352)
+time: 3.3195, value: {8.23566, 1.29563}
+!!!!!!!! Found close enough solution: {8.23566, 1.29563}
+Trial 38
+Starting at: (-.920609, .6625)
+time: 28.8304, value: {52.3912, .891225}
+Trial 39
+Starting at: (-2.25588, .923069)
+time: 2.21888, value: {-2.28604, .92568}
+Trial 40
+Starting at: (-.930772, .407481)
+time: 28.8167, value: {-681.428, .301041}
+Trial 41
+Starting at: (.765581, .42746)
+time: 28.6928, value: {43.0087, .893914}
+Trial 42
+Starting at: (-.504308, .80903)
+time: 28.6708, value: {-11.8594, 6.27186}
+Trial 43
+Starting at: (-1.62573, 1.08177)
+time: 1.10932, value: {-2.09385, 1.08709}
+Trial 44
+Starting at: (1.04778, .735077)
+time: 2.20916, value: {-.470625, .157119}
+Trial 45
+Starting at: (-2.03379, .937684)
+time: 2.21154, value: {-3.7888, .821874}
+Trial 46
+Starting at: (.876126, .684787)
+time: 8.82923, value: {19.6085, .872773}
+Trial 47
+Starting at: (-.469825, .834393)
+time: 18.7542, value: {10.5999, 9.44222}
+!!!!!!!! Found close enough solution: {10.5999, 9.44222}
+Trial 48
+Starting at: (-1.08613, .648832)
+time: 3.32209, value: {54.6058, .736284}
+!!!!!!!! Found close enough solution: {54.6058, .736284}
+Trial 49
+Starting at: (-2.91471, .416345)
+time: 28.6643, value: {36.1705, .897048}
+Trial 50
+Starting at: (.987626, .806755)
+time: 28.6462, value: {-24.3143, -1.7902}
+Trial 51
+Starting at: (-2.42241, 1.00553)
+time: 6.61186, value: {-2.22428, .988875}
+Trial 52
+Starting at: (1.45439, .903189)
+time: 5.51583, value: {3.00558, .800376}
+Trial 53
+Starting at: (.720161, .866595)
+time: 28.705, value: {46.3882, .892418}
+Trial 54
+Starting at: (1.20463, .50134)
+time: 19.8305, value: {-19.4691, .92724}
+Trial 55
+Starting at: (-2.07132, .861013)
+time: 1.10883, value: {1.26716, .857473}
+Trial 56
+Starting at: (-1.71996, .540758)
+time: 28.6867, value: {1061.01, .590212}
+!!!!!!!! Found close enough solution: {1061.01, .590212}
+Trial 57
+Starting at: (-.324314, .491581)
+time: 3.30943, value: {101.978, .686285}
+!!!!!!!! Found close enough solution: {101.978, .686285}
+Trial 58
+Starting at: (.92521, .744039)
+time: 2.20883, value: {1.22005, .405293}
+Trial 59
+Starting at: (-1.40222, .876643)
+time: 28.6018, value: {1.92865, .912034}
+Trial 60
+Starting at: (-1.00296, .903378)
+time: 3.30904, value: {11.2854, 1.07325}
+!!!!!!!! Found close enough solution: {11.2854, 1.07325}
+Trial 61
+Starting at: (-2.79123, .941357)
+time: 4.39305, value: {-2.20053, .980379}
+Trial 62
+Starting at: (-.729544, .618715)
+time: 3.31683, value: {64.9914, .724728}
+!!!!!!!! Found close enough solution: {64.9914, .724728}
+Trial 63
+Starting at: (-1.87036, .639417)
+time: 1.10839, value: {-63.8387, .6385}
+!!!!!!!! Found close enough solution: {-63.8387, .6385}
+Trial 64
+Starting at: (-1.8495, .731895)
+time: 1.1116, value: {-26.6016, .730849}
+!!!!!!!! Found close enough solution: {-26.6016, .730849}
+Trial 65
+Starting at: (.408295, .428843)
+time: 28.6551, value: {36.8986, .896638}
+Trial 66
+Starting at: (-1.4196, .488889)
+time: 28.6578, value: {-138.002, .214454}
+Trial 67
+Starting at: (-2.87729, .965471)
+time: 9.92053, value: {-16.7833, 2.03504}
+!!!!!!!! Found close enough solution: {-16.7833, 2.03504}
+Trial 68
+Starting at: (.903929, .646992)
+time: 4.40605, value: {12.9784, .997683}
+Trial 69
+Starting at: (-2.211, .95943)
+time: 1.09684, value: {-2.20525, .959206}
+Trial 70
+Starting at: (1.29728, .784765)
+time: 2.20475, value: {2.19347, .665114}
+Trial 71
+Starting at: (-1.08942, .950242)
+time: 14.2862, value: {-8.27022, 3.09498}
+Trial 72
+Starting at: (-2.91773, 1.03786)
+time: 12.1129, value: {2.62714, -5.51534}
+!!!!!!!! Found close enough solution: {2.62714, -5.51534}
+Trial 73
+Starting at: (-.139505, .894744)
+time: 5.49049, value: {.404325, .925748}
+Trial 74
+Starting at: (.684666, .94218)
+time: 6.60688, value: {.567442, .928557}
+Trial 75
+Starting at: (-.841802, .765915)
+time: 2.21994, value: {5.78395, .40807}
+Trial 76
+Starting at: (-.152971, .445465)
+time: 28.6834, value: {173.387, .891062}
+Trial 77
+Starting at: (.39844, 1.09904)
+time: 1.10726, value: {1.21513, 1.08479}
+Trial 78
+Starting at: (-2.8445, .830196)
+time: 25.3002, value: {.820787, .928806}
+Trial 79
+Starting at: (1.12276, .81626)
+time: 3.30577, value: {-1.27951, .779904}
+Trial 80
+Starting at: (-.146047, .434195)
+time: 28.7221, value: {189.219, .89538}
+Trial 81
+Starting at: (.776687, .498102)
+time: 6.62054, value: {27.8229, .805338}
+Trial 82
+Starting at: (.828098, .443578)
+time: 28.7248, value: {19.3784, .907844}
+Trial 83
+Starting at: (-1.72209, .664747)
+time: 2.19764, value: {783.03, .645398}
+!!!!!!!! Found close enough solution: {783.03, .645398}
+Trial 84
+Starting at: (-1.00693, .700016)
+time: 2.21096, value: {20.4481, .858187}
+Trial 85
+Starting at: (-.00100623, .533196)
+time: 28.737, value: {-142.418, -1.39108}
+Trial 86
+Starting at: (-2.52487, .57227)
+time: 28.6373, value: {40.3828, .895107}
+Trial 87
+Starting at: (-.937694, .914952)
+time: 5.50361, value: {-1.26105, .607408}
+Trial 88
+Starting at: (-.67206, .964367)
+time: 6.61326, value: {164.428, 1.5259}
+!!!!!!!! Found close enough solution: {164.428, 1.5259}
+Trial 89
+Starting at: (1.45315, .915885)
+time: 12.1172, value: {26.1391, .81158}
+Trial 90
+Starting at: (.647242, .708507)
+time: 2.20626, value: {-31.4962, -1.75049}
+Trial 91
+Starting at: (.854051, 1.03437)
+time: 1.11167, value: {1.15439, 1.02856}
+Trial 92
+Starting at: (.412854, .828381)
+time: 3.32045, value: {4.72461, .714426}
+Trial 93
+Starting at: (1.11174, .672621)
+time: 28.6965, value: {702.286, -12.0525}
+!!!!!!!! Found close enough solution: {702.286, -12.0525}
+Trial 94
+Starting at: (.0494993, .708609)
+time: 9.93657, value: {19.4562, .870749}
+Trial 95
+Starting at: (-.648266, .501186)
+time: 7.72046, value: {174.897, .651598}
+!!!!!!!! Found close enough solution: {174.897, .651598}
+Trial 96
+Starting at: (-.417558, .805597)
+time: 28.6513, value: {-11.1535, -2.10655}
+!!!!!!!! Found close enough solution: {-11.1535, -2.10655}
+Trial 97
+Starting at: (1.33637, .466801)
+time: 3.31535, value: {-20.0755, 3.71201}
+!!!!!!!! Found close enough solution: {-20.0755, 3.71201}
+Trial 98
+Starting at: (-2.22357, .439457)
+time: 28.6873, value: {-185.736, .246975}
+Trial 99
+Starting at: (.394466, .811586)
+time: 6.59645, value: {-25.5785, .926728}
+Trial 100
+Starting at: (.573264, .591838)
+time: 5.5239, value: {28.9523, .796065}

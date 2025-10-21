@@ -1,0 +1,313 @@
+Hyperbola Two Solutions via Newton's Method
+Target:  {.2, 0, -.16, -1.2, 0} with points (3, 1.1180) or (3.5, 1.7321) 
+Trial 1
+Starting at: (3.46859, 1.43043)
+time: 1.17498, value: {3.46562, 1.36361}
+Trial 2
+Starting at: (3.29954, 1.6055)
+time: 8.90279, value: {2.87115, 1.65568}
+Trial 3
+Starting at: (3.44828, 1.55378)
+time: 1.11981, value: {3.33618, 1.61235}
+Trial 4
+Starting at: (3.54007, 1.51924)
+time: 1.14054, value: {3.47912, 1.59018}
+Trial 5
+Starting at: (2.99367, 1.46712)
+time: 3.34262, value: {2.86198, 1.4518}
+Trial 6
+Starting at: (3.49155, 1.50018)
+time: 1.11877, value: {3.44073, 1.56716}
+Trial 7
+Starting at: (2.93211, 1.29271)
+time: 3.39117, value: {-28.0183, -1.46737}
+!!!!!!!! Found close enough solution: {-28.0183, -1.46737}
+Trial 8
+Starting at: (3.28692, 1.38182)
+time: 1.16466, value: {3.30768, .958693}
+Trial 9
+Starting at: (3.47867, 1.03392)
+time: 1.11525, value: {3.45699, 1.02637}
+Trial 10
+Starting at: (2.92514, 1.58652)
+time: 1.11705, value: {2.78954, 1.58013}
+Trial 11
+Starting at: (3.53678, 1.10846)
+time: 1.11034, value: {3.54734, 1.10671}
+Trial 12
+Starting at: (2.99864, 1.42738)
+time: 1.10147, value: {2.99599, 1.427}
+Trial 13
+Starting at: (3.41409, 1.47211)
+time: 1.11298, value: {3.37927, 1.52721}
+Trial 14
+Starting at: (3.29924, 1.03222)
+time: 19.9304, value: {6.16577, 2.77276}
+!!!!!!!! Found close enough solution: {6.16577, 2.77276}
+Trial 15
+Starting at: (3.17128, 1.25424)
+time: 7.75492, value: {3.1503, 1.35356}
+Trial 16
+Starting at: (3.49582, 1.26141)
+time: 1.11698, value: {3.52659, 1.2808}
+Trial 17
+Starting at: (3.29304, 1.23236)
+time: 1.11585, value: {3.21704, 1.25558}
+Trial 18
+Starting at: (2.93099, 1.36344)
+time: 5.54825, value: {3.14666, 1.359}
+Trial 19
+Starting at: (3.5423, 1.04256)
+time: 1.11315, value: {3.52227, 1.03399}
+Trial 20
+Starting at: (3.2905, 1.3506)
+time: 1.11432, value: {3.32703, 1.64194}
+Trial 21
+Starting at: (3.3236, 1.50577)
+time: 1.11237, value: {3.24641, 1.54958}
+Trial 22
+Starting at: (3.31256, 1.25159)
+time: 1.11783, value: {3.27701, 1.29864}
+Trial 23
+Starting at: (3.10412, 1.43487)
+time: 12.2059, value: {2.92414, 1.43066}
+Trial 24
+Starting at: (3.44984, 1.57444)
+time: 1.11397, value: {3.31256, 1.63232}
+Trial 25
+Starting at: (2.94822, 1.29176)
+time: 25.5075, value: {5.76766, 2.35805}
+!!!!!!!! Found close enough solution: {5.76766, 2.35805}
+Trial 26
+Starting at: (2.92224, 1.0958)
+time: 1.11674, value: {2.9482, 1.09951}
+Trial 27
+Starting at: (3.08806, 1.11747)
+time: 3.32256, value: {3.30817, .624674}
+Trial 28
+Starting at: (3.41464, 1.15998)
+time: 1.11553, value: {3.37541, 1.15926}
+Trial 29
+Starting at: (3.2453, 1.1081)
+time: 9.95086, value: {3.15915, 1.34399}
+Trial 30
+Starting at: (3.46845, 1.57927)
+time: 1.11146, value: {3.32785, 1.63973}
+Trial 31
+Starting at: (3.51684, 1.32002)
+time: 1.12303, value: {3.54316, 1.34191}
+Trial 32
+Starting at: (3.02018, 1.52266)
+time: 2.21097, value: {2.83827, 1.51573}
+Trial 33
+Starting at: (3.18646, 1.35911)
+time: 1.10766, value: {3.20147, 1.27903}
+Trial 34
+Starting at: (3.02396, 1.56318)
+time: 8.8317, value: {2.78209, 1.60895}
+Trial 35
+Starting at: (3.48147, 1.37102)
+time: 1.11408, value: {3.50297, 1.4047}
+Trial 36
+Starting at: (2.90897, 1.13453)
+time: 1.1151, value: {2.8728, 1.13808}
+Trial 37
+Starting at: (3.09475, 1.19115)
+time: 4.43793, value: {1.7503, -.749662}
+Trial 38
+Starting at: (3.15697, 1.2351)
+time: 3.31406, value: {3.13426, 1.32811}
+Trial 39
+Starting at: (3.10537, 1.28852)
+time: 7.73602, value: {3.15652, 1.33056}
+Trial 40
+Starting at: (3.13374, 1.05926)
+time: 28.8351, value: {8.03909, -.862232}
+!!!!!!!! Found close enough solution: {8.03909, -.862232}
+Trial 41
+Starting at: (3.04657, 1.01961)
+time: 22.1264, value: {1.73849, 3.34144}
+Trial 42
+Starting at: (3.20325, 1.07566)
+time: 2.21453, value: {2.86933, 1.14997}
+Trial 43
+Starting at: (3.1305, 1.79362)
+time: 28.8368, value: {1.69455, 1.1834}
+Trial 44
+Starting at: (3.08941, 1.02794)
+time: 4.4233, value: {1.23302, -.294122}
+Trial 45
+Starting at: (2.91861, 1.57986)
+time: 1.11217, value: {2.79656, 1.57355}
+Trial 46
+Starting at: (3.2818, 1.20086)
+time: 1.12114, value: {3.15517, 1.16027}
+Trial 47
+Starting at: (3.34648, 1.2663)
+time: 1.11643, value: {3.34709, 1.31787}
+Trial 48
+Starting at: (3.14092, 1.09143)
+time: 26.5826, value: {2.04224, -.996253}
+Trial 49
+Starting at: (3.4162, 1.76435)
+time: 4.44541, value: {2.09497, 1.83677}
+!!!!!!!! Found close enough solution: {2.09497, 1.83677}
+Trial 50
+Starting at: (3.12889, 1.2811)
+time: 7.77184, value: {3.15427, 1.33271}
+Trial 51
+Starting at: (3.17292, 1.16202)
+time: 28.8864, value: {-6.76306, -7.18892}
+!!!!!!!! Found close enough solution: {-6.76306, -7.18892}
+Trial 52
+Starting at: (3.50977, 1.48925)
+time: 1.11474, value: {3.47004, 1.5616}
+Trial 53
+Starting at: (3.27417, 1.77214)
+time: 2.2056, value: {2.86083, 1.78538}
+Trial 54
+Starting at: (2.9688, 1.49579)
+time: 2.19873, value: {2.86844, 1.48837}
+Trial 55
+Starting at: (3.48699, 1.25681)
+time: 1.11223, value: {3.51856, 1.27733}
+Trial 56
+Starting at: (3.54275, 1.30876)
+time: 1.10424, value: {3.56447, 1.32395}
+Trial 57
+Starting at: (2.94936, 1.36214)
+time: 6.6485, value: {3.15726, 1.35173}
+Trial 58
+Starting at: (2.95661, 1.14343)
+time: 2.21263, value: {2.56436, 1.11248}
+Trial 59
+Starting at: (3.15726, 1.06741)
+time: 3.30713, value: {2.17994, -.534505}
+Trial 60
+Starting at: (3.27206, 1.8061)
+time: 7.75043, value: {4.06328, 1.65365}
+Trial 61
+Starting at: (3.15845, 1.37244)
+time: 1.11612, value: {3.1797, 1.33376}
+Trial 62
+Starting at: (3.59993, 1.23696)
+time: 1.11385, value: {3.54559, 1.21728}
+Trial 63
+Starting at: (3.36897, 1.78141)
+time: 6.64671, value: {5.24621, 12.1873}
+!!!!!!!! Found close enough solution: {5.24621, 12.1873}
+Trial 64
+Starting at: (3.15173, 1.1274)
+time: 2.22205, value: {2.85739, 1.20923}
+Trial 65
+Starting at: (3.22449, 1.34665)
+time: 1.11467, value: {3.22671, 1.07563}
+Trial 66
+Starting at: (3.15293, 1.16659)
+time: 25.4561, value: {.927078, 16.0764}
+!!!!!!!! Found close enough solution: {.927078, 16.0764}
+Trial 67
+Starting at: (3.22608, 1.4425)
+time: 1.12064, value: {3.20935, 1.45676}
+Trial 68
+Starting at: (3.59605, 1.11239)
+time: 1.11321, value: {3.63044, 1.11423}
+Trial 69
+Starting at: (3.54512, 1.80195)
+time: 14.3766, value: {3.81281, -4.9591}
+Trial 70
+Starting at: (3.1066, 1.72681)
+time: 2.21552, value: {2.86865, 1.73847}
+Trial 71
+Starting at: (2.90079, 1.39237)
+time: 6.64779, value: {3.04591, 1.41625}
+Trial 72
+Starting at: (3.03471, 1.305)
+time: 6.64876, value: {3.14662, 1.35987}
+Trial 73
+Starting at: (3.03126, 1.77256)
+time: 6.65646, value: {2.32724, 1.85379}
+!!!!!!!! Found close enough solution: {2.32724, 1.85379}
+Trial 74
+Starting at: (3.49697, 1.67475)
+time: 1.11407, value: {3.15148, 1.74863}
+Trial 75
+Starting at: (3.36657, 1.40035)
+time: 1.12236, value: {3.38228, 1.68397}
+Trial 76
+Starting at: (3.28988, 1.63684)
+time: 26.6685, value: {2.13919, 2.34347}
+!!!!!!!! Found close enough solution: {2.13919, 2.34347}
+Trial 77
+Starting at: (3.0775, 1.31502)
+time: 7.79193, value: {3.1602, 1.33047}
+Trial 78
+Starting at: (3.08338, 1.19231)
+time: 4.42534, value: {2.89144, .0835665}
+Trial 79
+Starting at: (3.49381, 1.63932)
+time: 1.11393, value: {3.25477, 1.70561}
+Trial 80
+Starting at: (3.26089, 1.60336)
+time: 9.97296, value: {2.87217, 1.65818}
+Trial 81
+Starting at: (3.09901, 1.2801)
+time: 6.67566, value: {3.1457, 1.3449}
+Trial 82
+Starting at: (3.29719, 1.74525)
+time: 28.8931, value: {16.2173, 1.43995}
+Trial 83
+Starting at: (3.04983, 1.61363)
+time: 3.31349, value: {3.25983, 1.67882}
+Trial 84
+Starting at: (3.12649, 1.70074)
+time: 4.42446, value: {2.17294, 1.78679}
+!!!!!!!! Found close enough solution: {2.17294, 1.78679}
+Trial 85
+Starting at: (3.17935, 1.6307)
+time: 2.2266, value: {2.80376, 1.63881}
+Trial 86
+Starting at: (3.38209, 1.45452)
+time: 1.11262, value: {3.35993, 1.49864}
+Trial 87
+Starting at: (3.506, 1.80772)
+time: 16.5865, value: {5.85411, 2.06871}
+Trial 88
+Starting at: (3.53834, 1.066)
+time: 1.10193, value: {3.53227, 1.05988}
+Trial 89
+Starting at: (3.13366, 1.35954)
+time: 1.11976, value: {3.14532, 1.33586}
+Trial 90
+Starting at: (3.04083, 1.67612)
+time: 7.72965, value: {3.40991, 1.64486}
+Trial 91
+Starting at: (3.5223, 1.40755)
+time: 1.1288, value: {3.52944, 1.42502}
+Trial 92
+Starting at: (3.36231, 1.25745)
+time: 1.12011, value: {3.36421, 1.30013}
+Trial 93
+Starting at: (3.1806, 1.565)
+time: 6.72851, value: {2.61633, 2.4801}
+Trial 94
+Starting at: (3.57341, 1.04394)
+time: 1.13315, value: {3.5546, 1.0359}
+Trial 95
+Starting at: (3.27802, 1.29409)
+time: 1.13262, value: {3.27516, 1.432}
+Trial 96
+Starting at: (3.06261, 1.65339)
+time: 3.35735, value: {2.87462, 1.66992}
+Trial 97
+Starting at: (3.54874, 1.66797)
+time: 1.12677, value: {3.20126, 1.76521}
+Trial 98
+Starting at: (2.96704, 1.09369)
+time: 1.13758, value: {2.89527, 1.09722}
+Trial 99
+Starting at: (3.34851, 1.42598)
+time: 1.12136, value: {3.34784, 1.42859}
+Trial 100
+Starting at: (3.22913, 1.43275)
+time: 1.13184, value: {3.22209, 1.4401}

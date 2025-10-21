@@ -1,18 +1,19 @@
+
 needs "../../HGates.m2"
-R = RR_53
+R = CC_53
 declareVariable \ {A, B, C, D, E, x, y, t}
 
 -- 1. Given points
-x1 = inputHGate 9
+x1 = inputHGate 9_R
 y1 = zeroHGate
 x2 = minusOneHGate
 y2 = zeroHGate
-x3 = fourHGate * x - inputHGate 8
-y3 = inputHGate (-9/5)
-x4 = inputHGate (4 - sqrt(5) * 5/3)
-y4 = y * inputHGate (5/2) - inputHGate 0.5
+x3 = fourHGate * x - inputHGate 8_R
+y3 = inputHGate (-9_R/5)
+x4 = inputHGate (4 - sqrt(5)_R * 5/3)
+y4 = y * inputHGate (5_R/2) - inputHGate 0.5
 x5 = twoHGate * x 
-y5 = inputHGate (-3) * y
+y5 = inputHGate (-3_R) * y
 
 -- 2. For Predictor-Corrector Homotopy Continuation
 f0 = method()
@@ -44,7 +45,6 @@ g7 = E*E - oneHGate
 
 G = hMatrixGate({g1, g2, g3, g4, g5, g6, g7}, 7, 1)
 MG = hMap({X}, {G})
-Gsol = {1, 1, 1, 1, 1, 1, 1} -- known solution of G
 d = 0.01 -- time-step
 
 end

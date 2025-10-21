@@ -4,10 +4,13 @@ declareVariable \ {x,y,z,w}
 R = RR_53; -- using to unify ring for "matrix" function
 x0 = inputValueTable {x => 2_R, y => pi_R, z => 0_R, w => 1/2_R}
 
+
 -- check HGates (not HMatrixGates)
 -- net, length, diff, specialize
 g_1 = x + x
 g_2 = g_1 * y 
+specialize(g_2, inputValueTable {x => 1})
+
 g_3 = g_2 * zeroHGate
 g_4 = g_3 + z 
 g_5 = g_4 * w
@@ -95,27 +98,3 @@ subGate (x, y, g_4)
 g_5 = scalarProductHMatrixGate(x, M)
 subGate (x, y, g_5)
 
--- check predicate
-restart
-needs "../HGates.m2"
-declareVariable \ {x,y,z,w,t, s_0, s_1, y}
-R = RR_53; -- using to unify ring for "matrix" function
-
--- example with f = 5xt
-T0 = hMatrixGate({s_0, s_1}, 2, 1)
-x0 = inputHGate 2
-X0 = hMatrixGate({y}, 1, 1)
-H = hMatrixGate({T0, X0}, 2, 1)
-
-h2 = (inputHGate 5)*t 
-h3 = h2 * x
-F = hMatrixGate({h3}, 1, 1)
-X = hMatrixGate({x}, 1, 1)
-p = predictorHMatrixGate(H, t, X, F)
-showStructure SumHMatrixGate
-showStructure p
-
-L = inputValueTable {y => 2_R, s_0 => 1_R, s_1 => 1.1_R}
-specialize(p, L)
-
-inputHGate (-1/1.1 * 2)

@@ -50,11 +50,26 @@ R = RR_53
 declareVariable \ {A, B, C, D, E, x, y, t}
 
 -- 1. Define given points
-(x1, y1) = (inputHGate 1., inputHGate 2.)
-(x2, y2) = (inputHGate (3.), inputHGate 5.)
-(x3, y3) = (twoHGate*x, threeHGate*y)
-(x4, y4) = (x, inputHGate 1.)
-(x5, y5) = (inputHGate 1., y)
+-- answer (x,y) = (1,3) doesn't work
+--(x3, y3) = ((inputHGate 9) * x, y - threeHGate) 
+--(x4, y4) = (fourHGate, y)
+--(x5, y5) = (x, inputHGate (12/5)) -- y = 1
+--(x1, y1) = (twoHGate, inputHGate (3*sqrt(21)/5)) -- x = sqrt3
+--(x2, y2) = (threeHGate, inputHGate (6*sqrt(6)/5))
+
+-- answer (x,y) = (0, 1) works!
+--(x1, y1) = (inputHGate (-2), zeroHGate)
+--(x2, y2) = (twoHGate, zeroHGate)
+--(x3, y3) = (x, twoHGate)
+--(x4, y4) = (x, minusOneHGate * twoHGate * y)
+--(x5, y5) = (inputHGate sqrt(3), y)
+
+-- answer (x,y) = (2, 3) not even close
+(x5, y5) = (zeroHGate, y)
+(x3, y3) = (x-twoHGate, inputHGate (-3/7)*y)
+(x1, y1) = (inputHGate (2*sqrt(3)), twoHGate + inputHGate (5*sqrt(3/7)))
+(x2, y2) = (inputHGate (2*sqrt(3)) + inputHGate (15/sqrt(13)), twoHGate)
+(x4, y4) = (x * inputHGate sqrt(3) - inputHGate (15/sqrt(13)), twoHGate)
 
 -- 2. Define HMap of F = (f1, ... f7)
 f0 = method()
@@ -79,7 +94,7 @@ MF = hMap({X}, {F})
 -- confirm that jacobian of G at Gsol is nonsingular
 
 -- let G be a unit circle centered at the origin
--- solution is known to be (x,y) = (-1,0)
+-- solution is known to be (x,y) = -sqrt(2)/2), -sqrt(2)/2)
 (x1g, y1g) = (inputHGate 0., inputHGate 1.)
 (x2g, y2g) = (inputHGate (-1.), inputHGate 0)
 (x3g, y3g) = (x, y)
@@ -96,7 +111,7 @@ g7 = (inputHGate 0.5 * B) - (inputHGate 0.25 * D * E)
 
 G = hMatrixGate({g1, g2, g3, g4, g5, g6, g7}, 7, 1)
 MG = hMap({X}, {G})
-Gsol = {-1., 0., -1., 0., 0., sqrt(2)/2, sqrt(2)/2}
+Gsol = {-1., 0., -1., 0., 0., -sqrt(2)/2, -sqrt(2)/2}
 d = 0.01
 
 -- 4. Use homtopy continutation to get a solution

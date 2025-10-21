@@ -4,14 +4,14 @@ declareVariable \ {A, B, C, D, E, x, y, t}
 
 -- 1. Given points
 x1 = oneHGate
-y1 = inputHGate sqrt(3)
+y1 = inputHGate sqrt(3)_R
 x2 = minusOneHGate
-y2 = inputHGate sqrt(3)
-x3 = x * inputHGate sqrt(2)
+y2 = inputHGate sqrt(3)_R
+x3 = x * inputHGate sqrt(2)_R
 y3 = zeroHGate
 x4 = zeroHGate
-y4 = y * inputHGate (-sqrt(2))
-x5 = x 
+y4 = y * inputHGate (-sqrt(2))_R
+x5 = x
 y5 = y
 
 -- 2. For Predictor-Corrector Homotopy Continuation

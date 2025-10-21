@@ -715,10 +715,10 @@ newtonsMethod(HMap, List) := (g, X0) -> (
         X1 = specialize(G, L);
         track = track + 1;
         
-        if (track > 30) then (
+        if (track > 24) then (
             --<< "Current iteration: " << track << ", threshold is "  << threshold << endl;
             --<< "Difference between X_k, X_k-1 (2-norm): " << sqrt fold(plus, (X1 - X0)/(i -> i*i)) << endl;
-            if (track > 100) then (
+            if (track > 24) then (
                 break;
             );
         );
@@ -751,17 +751,18 @@ predictorCorrector(HMap, HMap, List, RR) := o -> (Fmap, Gmap, Gsol, d) -> (
   X0literal = Gsol;
   t0literal = 0.;
   while (t0literal < 1. - d) do (
+    << "iteration: " << t0literal << endl;
     t1literal = t0literal + d;
     predlist = toList (t0literal, t1literal, X0literal);
 
     --<< "Iteration: " << t1literal << endl;
     -- 1. predict
-    X1literal = predictorRK4(M, predlist);
+    time X1literal = predictorRK4(M, predlist);
     --<< "Predicted: " << X1literal << endl;
     
     -- 2. correct
     Msinglevar = subMap(t, inputHGate t1literal, M);
-    X1literal = newtonsMethod(Msinglevar, X1literal);
+    time X1literal = newtonsMethod(Msinglevar, X1literal);
     --<< "Corrected: " << X1literal << endl;
 
     -- 3. update values for next iteration
@@ -769,6 +770,15 @@ predictorCorrector(HMap, HMap, List, RR) := o -> (Fmap, Gmap, Gsol, d) -> (
     X0literal = X1literal;
   );
   X1literal
+)
+
+rootOfUnity = method()
+
+-- returns ith jth root of unity (as scalar, not HGate)
+rootOfUnity (ZZ, ZZ) := (i, j) -> (
+    if j <= 0 then error "j must be positive";
+    angle := (2 * pi * i) / j;
+    cos(angle) + ii * sin(angle)
 )
 
 -- H version of Straight-line Programs ---------------------------------------------
