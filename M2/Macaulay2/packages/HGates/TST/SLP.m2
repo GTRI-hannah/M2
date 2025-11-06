@@ -7,6 +7,37 @@ c = b*b
 d = c + y
 printSLP({x, y}, {d})
 
+restart 
+needs "../HGates.m2"
+declareVariable \ {x, y, t}
+g = hMap({hMatrixGate({x, y}, 2, 1)}, {hMatrixGate({x*x + oneHGate, y*y*y - twoHGate}, 2, 1)})
+n = newtonsOp(g)
+printSLP({x, y}, n.OutputGates)
+
+restart 
+needs "../HGates.m2"
+declareVariable \ {x, y, t, x0, y0, t0, t1}
+g = hMap({t, hMatrixGate({x, y}, 2, 1)}, {hMatrixGate({x*x*t + oneHGate*t, y*y*y*t - twoHGate*t}, 2, 1)})
+X0 = hMatrixGate({x0, y0}, 2, 1)
+n = predictorTangHMatrixGate(g, {t0, t1, X0})
+printSLP({x0, y0, t0, t1}, {n})
+
+restart 
+needs "../HGates.m2"
+declareVariable \ {x, y, t, x0, y0, t0, t1}
+g = hMap({t, hMatrixGate({x, y}, 2, 1)}, {hMatrixGate({x*x*t + oneHGate*t, y*y*y*t - twoHGate*t}, 2, 1)})
+X0 = hMatrixGate({x0, y0}, 2, 1)
+n = predictorTrapHMatrixGate(g, {t0, t1, X0})
+printSLP({x0, y0, t0, t1}, {n})
+
+restart 
+needs "../HGates.m2"
+declareVariable \ {x, y, t, x0, y0, t0, t1}
+g = hMap({t, hMatrixGate({x, y}, 2, 1)}, {hMatrixGate({x*x*t + oneHGate*t, y*y*y*t - twoHGate*t}, 2, 1)})
+X0 = hMatrixGate({x0, y0}, 2, 1)
+n = predictorRK4HMatrixGate(g, {t0, t1, X0})
+printSLP({x0, y0, t0, t1}, {n})
+
 restart
 needs "../HGates.m2"
 declareVariable \ {x, y}

@@ -250,16 +250,10 @@ jacobian (HMatrixGate, HMatrixGate) := (X, G) -> (
     hMatrixGate(flatListForMatrix, n, m)
 )
 
---twoNorm = method() 
--- assume two nx1 matrices (vector length n), return 2-norm
---twoNorm (HMatrixGate) := (F) -> (
---    if F.Cols != 1 then error "column must be 1";
---    n := F.Rows;
---    holderSum := fold(plus, (0..n-1)/(i -> ElementHGate(F, i)*ElementHGate(F, i)))
---    SqrrtHGate(holderSum)
---)
--- TODO: add SqrrtHGate, 
--- TODO: fix *, + to include HMatrixGates (ie remove resp HMatrixGate methods)
+twonorm = method()
+twonorm (List) := L -> (
+    sqrt (fold(plus, L/(i -> i*(conjugate i))))
+)
 
 SumHMatrixGate = new Type of HMatrixGate
 net SumHMatrixGate := S -> (
@@ -675,14 +669,14 @@ newtonsOp(HMap) := g -> (
     hMap({Y}, {Y - solveHMatrixGate(J, P)})
 )
 
-newtonsMethod = method()
+newtonsMethod = method(Options => {iterations => 24})
 
 -- takes an HMap and an initial point (list of values, eg {1.}, {1., 1.})
 -- Assumptions
 -- (1) expect g to be of the form {X} -> {F(X)}, F function
 -- (2) X HMatrixGate (with attribute Elements = {InputHGate})
 -- (3) X0 has elements in R = RR_53 corresponding to variables in X 
-newtonsMethod(HMap, List) := (g, X0) -> (
+newtonsMethod(HMap, List) := o -> (g, X0) -> (
     G := newtonsOp(g);
     initialX0 := X0; -- track this for debugging
 
@@ -705,9 +699,10 @@ newtonsMethod(HMap, List) := (g, X0) -> (
     -- iterate over X_k until we find one satisfying
     -- ||X_k - X_{k-1}||_2 < threshold 
     track := 0; -- track iterations
-    threshold := 0.01;
-    cutoff := 1e-10; -- if we get this close to 0, stop
-    while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= threshold) and (max (specialize(F, L)) > cutoff) do (
+    threshold := 1e-6;
+    -- cutoff := 1e-6; -- if we get this close to 0, stop
+    -- while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= threshold) and (max (specialize(F, L)) > cutoff) do (
+    while (sqrt fold(plus, (X1 - X0)/(i -> i*i)) >= threshold) do (
         X0 = X1;
         L = inputValueTable (toList (0..n-1)/(i -> Xlist#i => X0#i));
         --<< "Newton's Method (determinant Jacobian): " << (specialize(detdF, L))#0 << ", X0: " << X0 << endl;
@@ -715,10 +710,10 @@ newtonsMethod(HMap, List) := (g, X0) -> (
         X1 = specialize(G, L);
         track = track + 1;
         
-        if (track > 24) then (
+        if (track > o.iterations) then (
             --<< "Current iteration: " << track << ", threshold is "  << threshold << endl;
             --<< "Difference between X_k, X_k-1 (2-norm): " << sqrt fold(plus, (X1 - X0)/(i -> i*i)) << endl;
-            if (track > 24) then (
+            if (track > o.iterations) then (
                 break;
             );
         );
@@ -729,7 +724,9 @@ newtonsMethod(HMap, List) := (g, X0) -> (
 predictorCorrector = method(Options => {fileName => "dummy.txt"})
 
 -- intakes HMap of F, HMap of G, List of solution to G, time step d
--- returns List approximating solution to F via predictor-corrector
+-- returns List with two elements:
+-- 1) a List approximating solution to F via predictor-corrector
+-- 2) the condition number of the jacobian of F at the solution found
 -- method, using RK4 and Newton's Method 
 -- assume we have a square system (ie #X = length F = length G)
 -- assume variable t is defined
@@ -742,7 +739,7 @@ predictorCorrector(HMap, HMap, List, RR) := o -> (Fmap, Gmap, Gsol, d) -> (
   X := Fmap.InputGates#0;
 
   -- 1. define homotopy HMap
-  gamma := inputHGate (random (0.8, 1.8)); -- random complex number
+  gamma := inputHGate (random CC); -- random complex number
   o.fileName << "gamma: " << gamma << endl;
   H = ((oneHGate - t)*G) + (gamma*t*F); -- \gamma arbitrarily selected
   M = hMap({t, X}, {H});
@@ -751,25 +748,28 @@ predictorCorrector(HMap, HMap, List, RR) := o -> (Fmap, Gmap, Gsol, d) -> (
   X0literal = Gsol;
   t0literal = 0.;
   while (t0literal < 1. - d) do (
-    << "iteration: " << t0literal << endl;
+    --<< "iteration: " << t0literal << endl;
     t1literal = t0literal + d;
     predlist = toList (t0literal, t1literal, X0literal);
 
     --<< "Iteration: " << t1literal << endl;
     -- 1. predict
-    time X1literal = predictorRK4(M, predlist);
+    X1literal = predictorRK4(M, predlist);
     --<< "Predicted: " << X1literal << endl;
     
     -- 2. correct
     Msinglevar = subMap(t, inputHGate t1literal, M);
-    time X1literal = newtonsMethod(Msinglevar, X1literal);
+    X1literal = newtonsMethod(Msinglevar, X1literal);
     --<< "Corrected: " << X1literal << endl;
 
     -- 3. update values for next iteration
     t0literal = t1literal;
     X0literal = X1literal;
   );
-  X1literal
+  -- compute condition number of jacobian at final point (under Frobenius norm)
+  JF = specialize(jacobian(X, F), inputValueTable (toList (0..(#X.Elements - 1))/(i -> (X.Elements)#i => X1literal#i)));
+  KJF = twonorm (JF);
+  {X1literal, KJF}
 )
 
 rootOfUnity = method()

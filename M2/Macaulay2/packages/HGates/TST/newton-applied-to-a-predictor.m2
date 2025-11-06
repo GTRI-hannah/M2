@@ -1,14 +1,38 @@
 restart
 needs "../HGates.m2"
-declareVariable \ {s_0, s_1, y_0, x, t}
--*
-s_0 is initial time
-s_1 is final time
-y_0 is initial state
-(x,t) are input names for H
-*-
+declareVariable \ {x, y, t, x0, y0, t0, t1}
 R = RR_53; -- using to unify ring for "matrix" function
 
+-- set up map
+G = hMatrixGate({(x*x+fiveHGate*x-sixHGate)*t, (y*y*y+twoHGate*y-oneHGate)*t}, 2, 1)
+X = hMatrixGate({x, y}, 2, 1)
+MG = hMap({t, X}, {G})
+
+-- initial value variables 
+X0 = hMatrixGate({x0, y0}, 2, 1)
+
+-- predictor tangent
+pTangent = predictorTangHMatrixGate(MG, {t0, t1, X0})
+
+-- fix time t0, t1
+pTangentFixTime = subGate(t0, inputHGate 0.2, subGate(t1, inputHGate 0.3, pTangent))
+
+-- make map for Newton's Operator
+pTangentMap = hMap({X0}, {pTangentFixTime})
+specialize(newtonsOp(pTangentMap), inputValueTable {x0 => 1., y0 => 5.}) --{.333333, 1.808}
+
+pTrap = predictorTrapHMatrixGate(MG, {t0, t1, X0})
+pTrapFixTime = subGate(t0, inputHGate 0.2, subGate(t1, inputHGate 0.3, pTrap))
+pTrapMap = hMap({X0}, {pTrapFixTime})
+specialize(newtonsOp(pTrapMap), inputValueTable {x0 => 1., y0 => 5.}) -- {.6, 3.0744}
+
+pRK4 = predictorRK4HMatrixGate(MG, {t0, t1, X0})
+pRK4FixTime = subGate(t0, inputHGate 0.2, subGate(t1, inputHGate 0.3, pRK4))
+pRK4Map = hMap({X0}, {pRK4FixTime})
+specialize(newtonsOp(pRK4Map), inputValueTable {x0 => 1., y0 => 5.}) -- {.333333, 2.08289}
+
+
+----------SCRAP--------------------
 -- example with H = 5x^2(1-t) + (5x^2+2x+1)t
 -- using y_0, s_i instead of x_0, t_i bc of M2 variable naming conventions
 -- y_0 = 0, s_0 = 0, s_1 = 0.1
