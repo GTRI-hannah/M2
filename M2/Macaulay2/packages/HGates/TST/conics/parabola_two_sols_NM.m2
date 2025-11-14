@@ -1,16 +1,16 @@
 needs "../../HGates.m2"
-R = RR_53
+R = CC_53
 declareVariable \ {x, y}
 
 -- 1. Given points 
-x1 = inputHGate (-8)
+x1 = inputHGate (-8_R)
 y1 = inputHGate (-21.48779)
-x2 = inputHGate (-8)
+x2 = inputHGate (-8_R)
 y2 = inputHGate (-0.508075)
 x3 = (inputHGate (-4*sqrt(2)/3)) * x - inputHGate (4/3 + 2*sqrt(2))
 y3 = zeroHGate
 x4 = zeroHGate
-y4 = y * inputHGate 16 - inputHGate (12 + 2*sqrt(2))
+y4 = y * inputHGate 16_R - inputHGate (12 + 2*sqrt(2))
 x5 = inputHGate 0.5 * x 
 y5 = inputHGate (sqrt(2)) * y
 

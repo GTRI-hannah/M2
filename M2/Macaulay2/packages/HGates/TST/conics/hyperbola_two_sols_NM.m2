@@ -1,17 +1,17 @@
 needs "../../HGates.m2"
-R = RR_53
+R = CC_53
 declareVariable \ {x, y}
 
 -- 1. Given points 
-x1 = inputHGate (-2)
+x1 = inputHGate (-2_R)
 y1 = inputHGate (-sqrt(105)/2)
-x2 = inputHGate (-4)
+x2 = inputHGate (-4_R)
 y2 = inputHGate (15/2)
-x3 = (inputHGate 8) * x - inputHGate 23
+x3 = (inputHGate 8_R) * x - inputHGate 23
 y3 = zeroHGate
 x4 = zeroHGate
 y4 = y * inputHGate 7.2834 - inputHGate (10.3792)
-x5 = inputHGate 2 * x 
+x5 = inputHGate 2_R * x 
 y5 = inputHGate (sqrt(5)) * y
 
 -- 2. For Newton's Method

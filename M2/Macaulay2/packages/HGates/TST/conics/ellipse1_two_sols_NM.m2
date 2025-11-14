@@ -1,18 +1,18 @@
 needs "../../HGates.m2"
-R = RR_53
+R = CC_53
 declareVariable \ {x, y}
 
 -- 1. Given points 
-x1 = inputHGate 9
+x1 = inputHGate 9_R
 y1 = zeroHGate
 x2 = minusOneHGate
 y2 = zeroHGate
-x3 = fourHGate * x - inputHGate 8
+x3 = fourHGate * x - inputHGate 8_R
 y3 = inputHGate (-9/5)
-x4 = inputHGate (4 - sqrt(5) * 5/3)
+x4 = inputHGate (4_R - sqrt(5) * 5/3)
 y4 = y * inputHGate (5/2) - inputHGate 0.5
 x5 = twoHGate * x 
-y5 = inputHGate (-3) * y
+y5 = inputHGate (-3_R) * y
 
 -- 2. For Newton's Method
 AA = hMatrixGate({

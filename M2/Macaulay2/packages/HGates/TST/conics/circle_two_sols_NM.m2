@@ -1,13 +1,13 @@
 needs "../../HGates.m2"
-R = RR_53
+R = CC_53
 declareVariable \ {x, y}
 
 -- 1. Given points
 x1 = oneHGate
-y1 = inputHGate sqrt(3)
+y1 = inputHGate sqrt(3_R)
 x2 = minusOneHGate
-y2 = inputHGate sqrt(3)
-x3 = x * inputHGate sqrt(2)
+y2 = inputHGate sqrt(3_R)
+x3 = x * inputHGate sqrt(2_R)
 y3 = zeroHGate
 x4 = zeroHGate
 y4 = y * inputHGate (-sqrt(2))

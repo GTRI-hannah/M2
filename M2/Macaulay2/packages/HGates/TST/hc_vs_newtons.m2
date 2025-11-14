@@ -1,7 +1,7 @@
 
 restart
 load "conics/circle_two_sols_NM.m2"
-fname = "tests/circle_two_sols_NM.txt"
+fname = "finaltests/c_NM.txt"
 f = openOut fname
 f << "Circle Four Solutions via Newton's Method" << endl;
 f << "Target: {-.25, 0, -.25, 0, 0} with 4 points (+/-1.414, +/1.414)" << endl;
@@ -14,95 +14,33 @@ time for j from 1 to 112 do (
     x0 = random CC;
     y0 = random CC;
     f << "Starting at: " << (x0, y0) << endl;
-    L = elapsedTiming (newtonsMethod(F, {x0, y0}));
+    L = elapsedTiming (newtonsMethod(F, {x0, y0}, iterations => 50));
     X1newtime = L#0;
     X1new = L#1;
     f << "time: " << X1newtime << ", value: " << X1new << endl;
     vT = specialize(F, inputValueTable {x => X1new#0, y => X1new#1});
-    if (sqrt(vT#0*conjugate(vT#0) + vT#1*conjugate(vT#1)) < 0.06) then (
-        f << "!!!!!!!! Found close enough solution: " << X1new << endl;
+    X = hMatrixGate({x, y},2,1);
+    Ff = F.OutputGates#0;
+    JF = specialize(jacobian(X, Ff), inputValueTable (toList (0..(#X.Elements - 1))/(i -> (X.Elements)#i => X1new#i)));
+    condJF = twonorm (JF);
+    if (sqrt(vT#0*conjugate(vT#0) + vT#1*conjugate(vT#1)) < 1.0e-6) then (
+        << "Run: " << j << ", Solution: " << num_sols << endl;
+        if (condJF < 1.0e3) then (
+            f << "-- F is close to zero at X1hom with good condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+        ) else (
+            f << "-- F is close to zero at X1hom but with poor condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+            << "-- F is close to zero at X1hom but with poor condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+        );
         num_sols = num_sols + 1;
     );
 )
 << "Total solutions found: " << num_sols << endl;
 f << close;
 
-restart
-load "conics/circle_two_sols_HC.m2"
-fname = "tests/circle_two_sols_HC.txt"
-f = openOut fname
-f << "Circle Four Solutions via Homotopy Continuation" << endl;
-f << "Target: {-.25, 0, -.25, 0, 0} with 4 points (+/-1.414, +/1.414)" << endl;
--- try homotopy continutation
--- try homotopy continutation
-<< "HC Circle" << endl;
-time for j from 1 to 100 do (
-    f << "Trial " << j << endl;
-    << "Trial " << j << endl;
-
-    L = elapsedTiming (predictorCorrector(MF, MG, Gsol, d, fileName => f));
-    X1homtime = L#0;
-    X1hom = L#1;
-    f << "time: " << X1homtime << ", value: " << X1hom << endl;
-    << "time: " << X1homtime << ", value: " << X1hom << endl;
-
-    ABCDEtrue = {-0.25, 0., -0.25, 0., 0.};
-    ABCDEapprox = toList (0..4)/(i -> X1hom#i); 
-    twonormdiff2 = sqrt fold(plus, (ABCDEapprox - ABCDEtrue)/(i -> i*i));
-
-    X1vT = inputValueTable (toList (0..(length X - 1))/(i -> X.Elements#i => X1hom#i));
-    twonormdiff1 = sqrt fold(plus, (specialize(F, X1vT))/(i -> i*i));
-    if (twonormdiff1 < 0.06) then (
-        f << "-- F is close to zero at X1hom: " << X1hom << endl;
-    );
-    if (twonormdiff2 < 0.06) then (
-        f << "-- Close to true conic coeffis: " << X1hom << endl;
-    );
-    f << "----------------------------------------" << endl;
-)
-f << close;
-
-
-restart
-load "conics/circle_two_sols_HC2.m2"
-time for j from 1 to 5 do (
-    fname = concatenate("tests/circle_two_sols_HC2_", toString j, ".txt");
-    f = openOut fname;
-    f << "Circle Two Solutions via Homotopy Continuation (2x2)" << endl;
-    f << "Target: {-.25, 0, -.25, 0, 0} with 4 points (+/-1.414, +/1.414)" << endl;
-    -- try homotopy continutation
-    << "HC2 Circle" << endl;
-    f << "Trial " << j << endl;
-    << "Trial " << j << endl;
-
-    L = elapsedTiming (predictorCorrector(MF, MG, Gsol, d, fileName => f));
-    X1homtime = L#0;
-    X1hom = L#1;
-    f << "time: " << X1homtime << ", value: " << X1hom << endl;
-    << "time: " << X1homtime << ", value: " << X1hom << endl;
-
-    ABCDEtrue = {-0.25, 0., -0.25, 0., 0.};
-    ABCDEapprox = specialize(Y, inputValueTable {x => X1hom#0, y => X1hom#1}); 
-    twonormdiff2 = sqrt fold(plus, (ABCDEapprox - ABCDEtrue)/(i -> i*i));
-
-    X1vT = inputValueTable (toList (0..(length X - 1))/(i -> X.Elements#i => X1hom#i));
-    twonormdiff1 = sqrt fold(plus, (specialize(F, X1vT))/(i -> i*i));
-    f << "2-norm coeffs: " << twonormdiff2 << endl;
-    
-    if (twonormdiff1 < 0.06) then (
-        f << "-- F is close to zero at X1hom: " << X1hom << endl;
-    );
-
-    if (twonormdiff2 < 0.06) then (
-        f << "Close to true conic coeffis: " << X1hom << endl;
-    );
-    f << "----------------------------------------" << endl;
-    f << close;
-)
 
 restart
 load "conics/ellipse1_two_sols_NM.m2"
-fname = "tests/ellipse1_two_sols_NM.txt"
+fname = "finaltests/e_NM.txt"
 f = openOut fname
 f << "Ellipse1 Two Solutions via Newton's Method" << endl;
 f << "Target: {-.111, 0, -.309, .889, 0} with points (2,1) or (4,-.6)" << endl;
@@ -111,79 +49,39 @@ f << "Target: {-.111, 0, -.309, .889, 0} with points (2,1) or (4,-.6)" << endl;
 -- newtonsMethod(F, {4, -3/5})
 << "Newton's Method Ellipse1" << endl;
 num_sols = 0;
-num_targs = 0;
-found1 = false;
-found2 = false;
 time for j from 1 to 112 do (
     f << "Trial " << j << endl;
     << "Trial " << j << endl;
     x0 = random CC;
     y0 = random CC;
     f << "Starting at: " << (x0, y0) << endl;
-    L = elapsedTiming (newtonsMethod(F, {x0, y0}));
+    L = elapsedTiming (newtonsMethod(F, {x0, y0}, iterations => 50));
     X1newtime = L#0;
     X1new = L#1;
     f << "time: " << X1newtime << ", value: " << X1new << endl;
     vT = specialize(F, inputValueTable {x => X1new#0, y => X1new#1});
-    if (sqrt(vT#0*conjugate(vT#0) + vT#1*conjugate(vT#1)) < 0.06) then (
-        f << "!!!!!!!! Found close enough solution: " << X1new << endl;
+    X = hMatrixGate({x, y},2,1);
+    Ff = F.OutputGates#0;
+    JF = specialize(jacobian(X, Ff), inputValueTable (toList (0..(#X.Elements - 1))/(i -> (X.Elements)#i => X1new#i)));
+    condJF = twonorm (JF);
+    if (sqrt(vT#0*conjugate(vT#0) + vT#1*conjugate(vT#1)) < 1.0e-6) then (
+        << "Run: " << j << ", Solution: " << num_sols << endl;
+        if (condJF < 1.0e3) then (
+            f << "-- F is close to zero at X1hom with good condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+            << "-- F is close to zero at X1hom with good condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+        ) else (
+            f << "-- F is close to zero at X1hom but with poor condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+            << "-- F is close to zero at X1hom but with poor condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+        );
         num_sols = num_sols + 1;
-        if (sqrt((X1new#0 - 2)*conjugate(X1new#0 - 2) + (X1new#1 - 1)*conjugate(X1new#1 - 1)) < 0.06) then (
-            f << "!!!!!!!! Actually close to target solution: " << X1new << endl;
-            f << "Found 1st target solution." << endl;
-            num_targs = num_targs + 1;
-            found1 = true;
-        );
-        if (sqrt((X1new#0 - 4)*conjugate(X1new#0 - 4) + (X1new#1 + 3/5)*conjugate(X1new#1 + 3/5)) < 0.06) then (
-            f << "!!!!!!!! Actually close to target solution: " << X1new << endl;
-            f << "Found 2nd target solution." << endl;
-            num_targs = num_targs + 1;
-            found2 = true;
-        );
     );
 )
 << "Total solutions found: " << num_sols << ", total target solutions found: " << num_targs << ", both targets: " << (found1 and found2) << endl;
 f << close;
 
 restart
-load "conics/ellipse1_two_sols_HC.m2"
-fname = "tests/ellipse1_two_sols_HC.txt"
-f = openOut fname
-f << "Ellipse1 Two Solutions via Homotopy Continuation" << endl;
-f << "Target: {-.111, 0, -.309, .889, 0} with points (2,1) or (4,-.6)" << endl;
--- try homotopy continutation
-<< "HC Ellipse1" << endl;
-time for j from 1 to 100 do (
-    f << "Trial " << j << endl;
-    << "Trial " << j << endl;
-
-    L = elapsedTiming (predictorCorrector(MF, MG, Gsol, d, fileName => f));
-    X1homtime = L#0;
-    X1hom = L#1;
-    f << "time: " << X1homtime << ", value: " << X1hom << endl;
-    << "time: " << X1homtime << ", value: " << X1hom << endl;
-
-    ABCDEtrue = {-1/9, 0., -25/81, 8/9, 0.};
-    ABCDEapprox = toList (0..4)/(i -> X1hom#i); 
-    twonormdiff2 = sqrt fold(plus, (ABCDEapprox - ABCDEtrue)/(i -> i*i));
-
-    X1vT = inputValueTable (toList (0..(length X - 1))/(i -> X.Elements#i => X1hom#i));
-    twonormdiff1 = sqrt fold(plus, (specialize(F, X1vT))/(i -> i*i));
-    if (twonormdiff1 < 0.06) then (
-        f << "-- F is close to zero at X1hom: " << X1hom << endl;
-    );
-    if (twonormdiff2 < 0.06) then (
-        f << "-- !!!!!!!! Actually close to true conic coefficients: " << X1hom << endl;
-    );
-    f << "----------------------------------------" << endl;
-)
-f << close;
-
-
-
-restart
 load "conics/parabola_two_sols_NM.m2"
-fname = "tests/parabola_two_sols_NM.txt"
+fname = "finaltests/p_NM.txt"
 f = openOut fname
 f << "Parabola Two Solutions via Newton's Method" << endl;
 f << "Target: {-.125, .25, -.125, -.7071, -.7071} with points (-2.82843, 1) or (1.41421, 0.5)" << endl;
@@ -193,27 +91,40 @@ f << "Target: {-.125, .25, -.125, -.7071, -.7071} with points (-2.82843, 1) or (
 -- newtonsMethod(F, {-2.82843, 1})
 -- newtonsMethod(F, {1.41421, 0.5}) -- getting -34.033, .4275 :(
 << "Newton's Method Parabola" << endl;
-time for j from 1 to 112 do (
+num_sols = 0;
+time for j from 1 to 30 do (
     f << "Trial " << j << endl;
     << "Trial " << j << endl;
     x0 = random CC;
     y0 = random CC;
     f << "Starting at: " << (x0, y0) << endl;
-    << "Starting at: " << (x0, y0) << endl;
-    L = elapsedTiming (newtonsMethod(F, {x0, y0}));
+    L = elapsedTiming (newtonsMethod(F, {x0, y0}, iterations => 50));
     X1newtime = L#0;
     X1new = L#1;
     f << "time: " << X1newtime << ", value: " << X1new << endl;
     vT = specialize(F, inputValueTable {x => X1new#0, y => X1new#1});
-    if (sqrt(vT#0*vT#0 + vT#1*vT#1) < 0.06) then (
-        f << "!!!!!!!! Found close enough solution: " << X1new << endl;
+    X = hMatrixGate({x, y},2,1);
+    Ff = F.OutputGates#0;
+    JF = specialize(jacobian(X, Ff), inputValueTable (toList (0..(#X.Elements - 1))/(i -> (X.Elements)#i => X1new#i)));
+    condJF = twonorm (JF);
+    if (sqrt(vT#0*conjugate(vT#0) + vT#1*conjugate(vT#1)) < 1.0e-6) then (
+        << "Run: " << j << ", Solution: " << num_sols << endl;
+        if (condJF < 1.0e3) then (
+            f << "-- F is close to zero at X1hom with good condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+            << "-- F is close to zero at X1hom with good condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+        ) else (
+            f << "-- F is close to zero at X1hom but with poor condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+            << "-- F is close to zero at X1hom but with poor condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+        );
+        num_sols = num_sols + 1;
     );
 )
+<< "Total solutions found: " << num_sols << ", total target solutions found: " << num_targs << ", both targets: " << (found1 and found2) << endl;
 f << close;
 
 restart
 load "conics/hyperbola_two_sols_NM.m2"
-fname = "tests/hyperbola_two_sols_NM.txt"
+fname = "finaltests/h_NM.txt"
 f = openOut fname
 f << "Hyperbola Two Solutions via Newton's Method" << endl;
 f << "Target:  {.2, 0, -.16, -1.2, 0} with points (3, 1.1180) or (3.5, 1.7321) " << endl;
@@ -221,200 +132,33 @@ f << "Target:  {.2, 0, -.16, -1.2, 0} with points (3, 1.1180) or (3.5, 1.7321) "
 -- newtonsMethod(F, {3, 1.1180}) -- close ish
 -- newtonsMethod(F, {3.5, 1.7321}) -- not good
 << "Newton's Method Hyperbola" << endl;
-time for j from 1 to 112 do (
+num_sols = 0;
+time for j from 1 to 30 do (
     f << "Trial " << j << endl;
     << "Trial " << j << endl;
     x0 = random CC;
     y0 = random CC;
     f << "Starting at: " << (x0, y0) << endl;
-    L = elapsedTiming (newtonsMethod(F, {x0, y0}));
+    L = elapsedTiming (newtonsMethod(F, {x0, y0}, iterations => 50));
     X1newtime = L#0;
     X1new = L#1;
     f << "time: " << X1newtime << ", value: " << X1new << endl;
-    << "time: " << X1newtime << ", value: " << X1new << endl;
     vT = specialize(F, inputValueTable {x => X1new#0, y => X1new#1});
-    if (sqrt(vT#0*vT#0 + vT#1*vT#1) < 0.06) then (
-        f << "!!!!!!!! Found close enough solution: " << X1new << endl;
+    X = hMatrixGate({x, y},2,1);
+    Ff = F.OutputGates#0;
+    JF = specialize(jacobian(X, Ff), inputValueTable (toList (0..(#X.Elements - 1))/(i -> (X.Elements)#i => X1new#i)));
+    condJF = twonorm (JF);
+    if (sqrt(vT#0*conjugate(vT#0) + vT#1*conjugate(vT#1)) < 1.0e-6) then (
+        << "Run: " << j << ", Solution: " << num_sols << endl;
+        if (condJF < 1.0e3) then (
+            f << "-- F is close to zero at X1hom with good condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+            << "-- F is close to zero at X1hom with good condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+        ) else (
+            f << "-- F is close to zero at X1hom but with poor condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+            << "-- F is close to zero at X1hom but with poor condition number: " << X1new << ", cond(J_F): " << condJF << endl;
+        );
+        num_sols = num_sols + 1;
     );
 )
+<< "Total solutions found: " << num_sols << endl;
 f << close;
-
-restart
-load "conics/ellipse1_two_sols_HC2.m2"
-fname = "tests/ellipse1_two_sols_HC2.txt"
-f = openOut fname
-f << "Ellipse1 Two Solutions via Homotopy Continuation (2x2)" << endl;
-f << "Target: {-.111, 0, -.309, .889, 0} with points (2,1) or (4,-.6)" << endl;
--- try homotopy continutation
-<< "HC2 Ellipse1" << endl;
-time for j from 1 to 3 do (
-    f << "Trial " << j << endl;
-    << "Trial " << j << endl;
-
-    L = elapsedTiming (predictorCorrector(MF, MG, Gsol, d, fileName => f));
-    << "finished PC part" << endl;
-    X1homtime = L#0;
-    X1hom = L#1;
-    f << "time: " << X1homtime << ", value: " << X1hom << endl;
-    << "time: " << X1homtime << ", value: " << X1hom << endl;
-
-    X1vT = inputValueTable (toList (0..(length X - 1))/(i -> X.Elements#i => X1hom#i));
-    twonormdiff1 = sqrt fold(plus, (specialize(F, X1vT))/(i -> i*conjugate(i)));
-    if (twonormdiff1 < 0.06) then (
-        f << "-- F is close to zero at X1hom: " << X1hom << endl;
-    );
-
-    f << "----------------------------------------" << endl;
-)
-f << close;
-
-
-
-restart
-load "conics/parabola_two_sols_HC.m2"
-fname = "tests/parabola_two_sols_HC.txt"
-f = openOut fname
-f << "Parabola Two Solutions via Homotopy Continuation" << endl;
-f << "Target: {-.125, .25, -.125, -.7071, -.7071} with points (-2.82843, 1) or (1.41421, 0.5)" << endl;
--- try homotopy continutation
-<< "HC Parabola" << endl;
-time for j from 1 to 100 do (
-    f << "Trial " << j << endl;
-    << "Trial " << j << endl;
-
-    L = elapsedTiming (predictorCorrector(MF, MG, Gsol, d, fileName => f));
-    X1homtime = L#0;
-    X1hom = L#1;
-    f << "time: " << X1homtime << ", value: " << X1hom << endl;
-    << "time: " << X1homtime << ", value: " << X1hom << endl;
-
-    ABCDEtrue = {-1/8, 0.25, -1/8, -sqrt(2)*0.5, -sqrt(2)*0.5};
-    ABCDEapprox = toList (0..4)/(i -> X1hom#i); 
-    twonormdiff2 = sqrt fold(plus, (ABCDEapprox - ABCDEtrue)/(i -> i*i));
-
-    X1vT = inputValueTable (toList (0..(length X - 1))/(i -> X.Elements#i => X1hom#i));
-    twonormdiff1 = sqrt fold(plus, (specialize(F, X1vT))/(i -> i*i));
-    if (twonormdiff1 < 0.06) then (
-        f << "-- F is close to zero at X1hom: " << X1hom << endl;
-    );
-    if (twonormdiff2 < 0.06) then (
-        f << "-- !!!!!!!! Actually close to true conic coefficients: " << X1hom << endl;
-    );
-    f << "----------------------------------------" << endl;
-)
-f << close;
-
-
-restart
-load "conics/parabola_two_sols_HC2.m2"
-fname = "tests/parabola_two_sols_HC2.txt"
-f = openOut fname
-f << "Parabola Two Solutions via Homotopy Continuation (2x2)" << endl;
-f << "Target: {-.125, .25, -.125, -.707107, -.707107} with points (-2.82843, 1) or (1.41421, 0.5)" << endl;
--- try homotopy continutation
-<< "HC2 Parabola" << endl;
-time for j from 1 to 3 do (
-    f << "Trial " << j << endl;
-    << "Trial " << j << endl;
-
-    L = elapsedTiming (predictorCorrector(MF, MG, Gsol, d, fileName => f));
-    X1homtime = L#0;
-    X1hom = L#1;
-    f << "time: " << X1homtime << ", value: " << X1hom << endl;
-    << "time: " << X1homtime << ", value: " << X1hom << endl;
-
-    ABCDEtrue = {-1/8, 0.25, -1/8, -sqrt(2)*0.5, -sqrt(2)*0.5};
-    ABCDEapprox = specialize(Y, inputValueTable {x => X1hom#0, y => X1hom#1}); 
-    twonormdiff2 = sqrt fold(plus, (ABCDEapprox - ABCDEtrue)/(i -> i*i));
-
-    X1vT = inputValueTable (toList (0..(length X - 1))/(i -> X.Elements#i => X1hom#i));
-    twonormdiff1 = sqrt fold(plus, (specialize(F, X1vT))/(i -> i*i));
-    if (twonormdiff1 < 0.06) then (
-        f << "-- F is close to zero at X1hom: " << X1hom << endl;
-    );
-
-    if (twonormdiff2 < 0.06) then (
-        f << "!!!!!!!! Close to true conic coefficients: " << X1hom << endl;
-    );
-    f << "----------------------------------------" << endl;
-)
-f << close;
--- intervals?
---newtonsMethod(F, {interval[-1.1,-0.99],interval[-3.1,-2.99]})
-
-
-
-restart
-load "conics/hyperbola_two_sols_HC.m2"
-fname = "tests/hyperbola_two_sols_HC.txt"
-f = openOut fname
-f << "Hyperbola Two Solutions via Homotopy Continuation" << endl;
-f << "Target:  {.2, 0, -.16, -1.2, 0} with points (3, 1.1180) or (3.5, 1.7321) " << endl;
--- try homotopy continutation
-<< "HC Hyperbola" << endl;
-time for j from 1 to 100 do (
-    f << "Trial " << j << endl;
-    << "Trial " << j << endl;
-
-    L = elapsedTiming (predictorCorrector(MF, MG, Gsol, d, fileName => f));
-    X1homtime = L#0;
-    X1hom = L#1;
-    f << "time: " << X1homtime << ", value: " << X1hom << endl;
-    << "time: " << X1homtime << ", value: " << X1hom << endl;
-
-    ABCDEtrue = {.2, 0, -.16, -1.2, 0};
-    ABCDEapprox = toList (0..4)/(i -> X1hom#i); 
-    twonormdiff2 = sqrt fold(plus, (ABCDEapprox - ABCDEtrue)/(i -> i*i));
-
-    X1vT = inputValueTable (toList (0..(length X - 1))/(i -> X.Elements#i => X1hom#i));
-    twonormdiff1 = sqrt fold(plus, (specialize(F, X1vT))/(i -> i*i));
-    if (twonormdiff1 < 0.06) then (
-        f << "-- F is close to zero at X1hom: " << X1hom << endl;
-    );
-    if (twonormdiff2 < 0.06) then (
-        f << "-- !!!!!!!! Actually close to true conic coefficients: " << X1hom << endl;
-    );
-    f << "----------------------------------------" << endl;
-)
-f << close;
-
-
-restart
-load "conics/hyperbola_two_sols_HC2.m2"
-fname = "tests/hyperbola_two_sols_HC2.txt"
-f = openOut fname
-f << "Hyperbola Two Solutions via Homotopy Continuation (2x2)" << endl;
-f << "Target:  {.2, 0, -.16, -1.2, 0} with points (3, 1.1180) or (3.5, 1.7321) " << endl;
--- try homotopy continutation
-<< "HC2 Hyperbola" << endl;
-time for j from 1 to 3 do (
-    f << "Trial " << j << endl;
-    << "Trial " << j << endl;
-
-    L = elapsedTiming (predictorCorrector(MF, MG, Gsol, d, fileName => f));
-    X1homtime = L#0;
-    X1hom = L#1;
-    f << "time: " << X1homtime << ", value: " << X1hom << endl;
-    << "time: " << X1homtime << ", value: " << X1hom << endl;
-
-    ABCDEtrue = {.2, 0, -.16, -1.2, 0};
-    ABCDEapprox = specialize(Y, inputValueTable {x => X1hom#0, y => X1hom#1}); 
-    twonormdiff2 = sqrt fold(plus, (ABCDEapprox - ABCDEtrue)/(i -> i*i));
-
-    X1vT = inputValueTable (toList (0..(length X - 1))/(i -> X.Elements#i => X1hom#i));
-    twonormdiff1 = sqrt fold(plus, (specialize(F, X1vT))/(i -> i*i));
-    if (twonormdiff1 < 0.06) then (
-        f << "-- F is close to zero at X1hom: " << X1hom << endl;
-    );
-
-    if (twonormdiff2 < 0.06) then (
-        f << "!!!!!!!! Close to true conic coefficients: " << X1hom << endl;
-    );
-    f << "----------------------------------------" << endl;
-)
-f << close;
--- intervals?
---newtonsMethod(F, {interval[-1.1,-0.99],interval[-3.1,-2.99]})
-
-
-
